@@ -1,21 +1,22 @@
 import ch
 import urllib, json
 
-url1 = "https://supportxmr.com/api/pool/stats/"
-url2 = "https://supportxmr.com/api/network/stats/"
-jsonDataPool = urllib.urlopen(url1)
-jsonDataNetwork = urllib.urlopen(url2)
-jsonToPython1 = json.loads(jsonDataPool.read())
-jsonToPython2 = json.loads(jsonDataNetwork.read())
-  
-print jsonToPython1['pool_statistics']['roundHashes']
-print jsonToPython2['difficulty']
-diff = jsonToPython2['difficulty']
-rShares = jsonToPython1['pool_statistics']['roundHashes']*100
-print ("diff = ",diff)
-print ("rShares = ", rShares)
-luck = int(rShares/diff)
-print luck,"%"
+##### TRIALS & TRIBULATIONS :)
+#url1 = "https://supportxmr.com/api/pool/stats/"
+#url2 = "https://supportxmr.com/api/network/stats/"
+#jsonDataPool = urllib.urlopen(url1)
+#jsonDataNetwork = urllib.urlopen(url2)
+#jsonToPython1 = json.loads(jsonDataPool.read())
+#jsonToPython2 = json.loads(jsonDataNetwork.read())
+#  
+#print jsonToPython1['pool_statistics']['roundHashes']
+#print jsonToPython2['difficulty']
+#diff = jsonToPython2['difficulty']
+#rShares = jsonToPython1['pool_statistics']['roundHashes']*100
+#print ("diff = ",diff)
+#print ("rShares = ", rShares)
+#luck = int(rShares/diff)
+#print luck,"%"
   
 class bot(ch.RoomManager):
   
