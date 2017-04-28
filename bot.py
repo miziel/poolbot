@@ -74,7 +74,7 @@ class bot(ch.RoomManager):
             totalshares += blocklist[i]['shares']
             if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
-        room.message("Overall pool luck is " + str(totalshares/totaldiff*100) + "%")
+        room.message("Overall pool luck is " + str(totalshares*100/totaldiff) + "%")
     
 rooms = [""]
 username = ""
