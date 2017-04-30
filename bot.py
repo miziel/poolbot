@@ -1,23 +1,8 @@
 import ch
-import urllib, json, requests
+import urllib
+import json
+import requests
 
-##### TRIALS & TRIBULATIONS :)
-#url1 = "https://supportxmr.com/api/pool/stats/"
-#url2 = "https://supportxmr.com/api/network/stats/"
-#jsonDataPool = urllib.urlopen(url1)
-#jsonDataNetwork = urllib.urlopen(url2)
-#jsonToPython1 = json.loads(jsonDataPool.read())
-#jsonToPython2 = json.loads(jsonDataNetwork.read())
-#  
-#print jsonToPython1['pool_statistics']['roundHashes']
-#print jsonToPython2['difficulty']
-#diff = jsonToPython2['difficulty']
-#rShares = jsonToPython1['pool_statistics']['roundHashes']*100
-#print ("diff = ",diff)
-#print ("rShares = ", rShares)
-#luck = int(rShares/diff)
-#print luck,"%"
-  
 class bot(ch.RoomManager):
   
   def onInit(self):
@@ -39,7 +24,7 @@ class bot(ch.RoomManager):
 
     if self.user == user: return
     
-    print("[{0}] {1}: {2}".format(room.name, user.name, message.body))
+ #   print("[{0}] {1}: {2}".format(room.name, user.name, message.body))
     
     try:
       cmd, args = message.body.split(" ", 1)
@@ -53,14 +38,10 @@ class bot(ch.RoomManager):
       prfx = False
       
     if cmd.lower() == "luck" and prfx:
-        url1 = "https://supportxmr.com/api/pool/stats/"
-        url2 = "https://supportxmr.com/api/network/stats/"
-        jsonDataPool = urllib.urlopen(url1)
-        jsonDataNetwork = urllib.urlopen(url2)
-        jsonToPython1 = json.loads(jsonDataPool.read())
-        jsonToPython2 = json.loads(jsonDataNetwork.read())
-        rShares = jsonToPython1['pool_statistics']['roundHashes']*100
-        diff = jsonToPython2['difficulty']
+        poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+        networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
+        rShares = poolStats['pool_statistics']['roundHashes']*100
+        diff = networkStats['difficulty']
         luck = int(rShares/diff)
         if (luck > 0) and (luck <= 1):
           room.message("Current block's luck is %s%% - seems like we just found one! *burger*" % str(luck))
@@ -94,15 +75,20 @@ class bot(ch.RoomManager):
             if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
         room.message("Overall pool luck is " + str(totalshares*100/totaldiff) + "%")
-    if cmd.lower() == "price" and prfx: 
+    if cmd.lower() == "price" and prfx:
+        self.setFontFace("8")
         poloniex = requests.get("https://poloniex.com/public?command=returnTicker").json()
         BTC_XMR_polo = poloniex['BTC_XMR']['last']
         USDT_XMR_polo = poloniex['USDT_XMR']['last']
         cryptocompare = requests.get("https://min-api.cryptocompare.com/data/price?fsym=XMR&tsyms=BTC,USD").json()
         BTC_XMR_cc = cryptocompare['BTC']
         USD_XMR_cc = cryptocompare['USD']
-        room.message("|| Poloniex | BTC {0} | USDT {1} || Cryptocompare | BTC {2} | USD {3} ||".format(BTC_XMR_polo[0:7], USDT_XMR_polo[0:5], BTC_XMR_cc, USD_XMR_cc))
-
+        room.message(("\r|| {0:.<15} | {1:.<6} {2:.^5.5} |  {3:.<6} {4:.^7.7} ||"
+                      "\r|| {5:.<15} | {6:.<6} {7:.^5.2f} |  {8:.<6} {9:.^7.5f} ||")
+                     .format("Poloniex", "USDT", USDT_XMR_polo, "BTC", BTC_XMR_polo,
+                             "Cryptocompare", "USD", USD_XMR_cc, "BTC", BTC_XMR_cc))
+        self.setFontFace("0")
+        
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
