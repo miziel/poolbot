@@ -53,7 +53,7 @@ class bot(ch.RoomManager):
       prfx = False
       
     if cmd.lower() == "cmd" and prfx:
-        room.message("Available commands (use: /command): cmd, luck, poolluck, price, block")
+        room.message("Available commands (use: /command): cmd, luck, poolluck, price, block1, block2")
       
     if cmd.lower() == "luck" and prfx:
         poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
@@ -62,25 +62,26 @@ class bot(ch.RoomManager):
         diff = networkStats['difficulty']
         luck = int(rShares/diff)
         if (luck >= 0) and (luck <= 1):
-          room.message("Current block's luck is %s%% - seems like we just found one! *burger*" % str(luck))
+          room.message("We are at %s%% for the next block. Great! We just found one! *burger*" % str(luck))
         elif (luck > 1) and (luck <= 20):
-          room.message("Current block's luck is %s%% - nice and low :)" % str(luck))
+          room.message("We are at %s%% for the next block. Noice :)" % str(luck))
         elif (luck > 20) and (luck <= 80):
-          room.message("Current block's luck is %s%% - looking good and green 8)" % str(luck))
+          room.message("We are at %s%% for the next block. Looking good and green 8)" % str(luck))
         elif (luck > 80) and (luck <= 100):
-          room.message("Current block's luck is %s%% - still green but..." % str(luck))
+          room.message("We are at %s%% for the next block. Still green but..." % str(luck))
         elif (luck > 100) and (luck <= 120):
-          room.message("Current block's luck is %s%% - a bit reddish." % str(luck))
+          room.message("We are at %s%% for the next block. A bit reddish." % str(luck))
         elif (luck > 120) and (luck <= 150):
-          room.message("Current block's luck is %s%% - getting more red every hash :(" % str(luck))
+          room.message("We are at %s%% for the next block. Getting more red every hash :(" % str(luck))
         elif (luck > 150) and (luck <= 200):
-          room.message("Current block's luck is %s%% - wouldn't mind finding one NOW!" % str(luck))
+          room.message("We are at %s%% for the next block. Wouldn't mind finding one NOW!" % str(luck))
         elif (luck > 200) and (luck <= 300):
-          room.message("Current block's luck is %s%% - damn time to find one, don't you think?" % str(luck))
+          room.message("We are at %s%% for the next block. Damn time to find one, don't you think?" % str(luck))
         elif (luck > 300) and (luck <= 400):
-          room.message("Current block's luck is %s%% - that's a lot of red." % str(luck))
+          room.message("We are at %s%% for the next block. That's a lot of red." % str(luck))
         else:
-          room.message("Current block's luck is %s%% - aiming for a new record, are we?" % str(luck))
+          room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
+          
     if cmd.lower() == "poolluck" and prfx:
         poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
         blocknum = poolstats['pool_statistics']['totalBlocksFound']
@@ -93,6 +94,7 @@ class bot(ch.RoomManager):
             if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
         room.message("Overall pool luck is " + str(totalshares*100/totaldiff) + "%")
+        
     if cmd.lower() == "price" and prfx:
         self.setFontFace("8")
         poloniex = requests.get("https://poloniex.com/public?command=returnTicker").json()
@@ -124,7 +126,6 @@ class bot(ch.RoomManager):
         timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
         room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago.")
 
-    
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
