@@ -2,6 +2,8 @@ import ch
 import urllib
 import json
 import requests
+import datetime
+import math
 
 class bot(ch.RoomManager):
   
@@ -43,7 +45,7 @@ class bot(ch.RoomManager):
         rShares = poolStats['pool_statistics']['roundHashes']*100
         diff = networkStats['difficulty']
         luck = int(rShares/diff)
-        if (luck > 0) and (luck <= 1):
+        if (luck >= 0) and (luck <= 1):
           room.message("Current block's luck is %s%% - seems like we just found one! *burger*" % str(luck))
         elif (luck > 1) and (luck <= 20):
           room.message("Current block's luck is %s%% - nice and low :)" % str(luck))
@@ -88,6 +90,14 @@ class bot(ch.RoomManager):
                      .format("Poloniex", "USDT", USDT_XMR_polo, "BTC", BTC_XMR_polo,
                              "Cryptocompare", "USD", USD_XMR_cc, "BTC", BTC_XMR_cc))
         self.setFontFace("0")
+    if cmd.lower() == "/block" and prfx:
+        poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+        lastblocktime = datetime.datetime.utcfromtimestamp(poolstats['pool_statistics']['lastBlockFoundTime'])
+        blocknum = poolstats['pool_statistics']['totalBlocksFound']
+        nowtime = datetime.datetime.utcnow()
+        delta = nowtime - lastblocktime
+        room.message("Last block (#" + str(blocknum) + ") was found on " + str(lastblocktime) + " UTC, " + str(math.floor(d.seconds/3600)) + "h:" + str(math.floor(d.seconds/60%60)) + "m ago")
+        
         
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
