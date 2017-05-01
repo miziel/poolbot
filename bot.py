@@ -4,6 +4,21 @@ import json
 import requests
 import datetime
 import math
+import time
+
+def prettyTimeDelta(seconds):
+  seconds = int(seconds)
+  days, seconds = divmod(seconds, 86400)
+  hours, seconds = divmod(seconds, 3600)
+  minutes, seconds = divmod(seconds, 60)
+  if days > 0:
+      return '%d d %d h' % (days, hours)
+  elif hours > 0:
+      return '%d h %d m' % (hours, minutes)
+  elif minutes > 0:
+      return '%d m %d s' % (minutes, seconds)
+  else:
+      return '%d s' % (seconds)
 
 class bot(ch.RoomManager):
   
@@ -15,18 +30,16 @@ class bot(ch.RoomManager):
 
   def onConnect(self, room):
     print("Connected")
-   
+
   def onReconnect(self, room):
     print("Reconnected")
-   
+
   def onDisconnect(self, room):
     print("Disconnected")  
 
   def onMessage(self, room, user, message):
 
     if self.user == user: return
-    
- #   print("[{0}] {1}: {2}".format(room.name, user.name, message.body))
     
     try:
       cmd, args = message.body.split(" ", 1)
@@ -38,6 +51,9 @@ class bot(ch.RoomManager):
       cmd = cmd[1:]
     else:
       prfx = False
+      
+    if cmd.lower() == "cmd" and prfx:
+        room.message("Available commands (use: /command): cmd, luck, poolluck, price, block")
       
     if cmd.lower() == "luck" and prfx:
         poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
@@ -90,15 +106,25 @@ class bot(ch.RoomManager):
                      .format("Poloniex", "USDT", USDT_XMR_polo, "BTC", BTC_XMR_polo,
                              "Cryptocompare", "USD", USD_XMR_cc, "BTC", BTC_XMR_cc))
         self.setFontFace("0")
-    if cmd.lower() == "/block" and prfx:
+        
+    if cmd.lower() == "block2" and prfx:
         poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
         lastblocktime = datetime.datetime.utcfromtimestamp(poolstats['pool_statistics']['lastBlockFoundTime'])
         blocknum = poolstats['pool_statistics']['totalBlocksFound']
         nowtime = datetime.datetime.utcnow()
         delta = nowtime - lastblocktime
         room.message("Last block (#" + str(blocknum) + ") was found on " + str(lastblocktime) + " UTC, " + str(math.floor(d.seconds/3600)) + "h:" + str(math.floor(d.seconds/60%60)) + "m ago")
-        
-        
+
+    if cmd.lower() == "block1" and prfx:
+        lastBlock = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
+        lastBlockFoundTime = lastBlock[0]['ts']
+        lastBlockReward = str(lastBlock[0]['value'])
+        xmr = (lastBlockReward[:1] + "." + lastBlockReward[2:5])
+        nowTS = time.time()
+        timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
+        room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago.")
+
+    
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
