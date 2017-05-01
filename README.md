@@ -5,4 +5,5 @@ supportXMR chatango PoolBot project
 ```
 /luck		- Display's the current block's luck
 /poolluck	- Display's the pool's overall luck
+/price - Displays XMR price in BTC and USD
 ```
