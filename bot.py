@@ -117,14 +117,15 @@ class bot(ch.RoomManager):
         delta = nowtime - lastblocktime
         room.message("Last block (#" + str(blocknum) + ") was found on " + str(lastblocktime) + " UTC, " + str(math.floor(d.seconds/3600)) + "h:" + str(math.floor(d.seconds/60%60)) + "m ago")
 
-    if cmd.lower() == "block1" and prfx:
+    if cmd.lower() == "block" and prfx:
         lastBlock = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
         lastBlockFoundTime = lastBlock[0]['ts']
         lastBlockReward = str(lastBlock[0]['value'])
+        lastBlockLuck = int(lastBlock[0]['shares']*100/lastBlock[0]['diff'])
         xmr = (lastBlockReward[:1] + "." + lastBlockReward[2:5])
         nowTS = time.time()
         timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
-        room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago.")
+        room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% luck.")
 
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
