@@ -1207,8 +1207,10 @@ class Room:
       return
     msg = "<n" + self.user.nameColor + "/>" + msg
     if self._currentname != None and not self._currentname.startswith("!anon"):
-      msg = "<f x%0.2i%s=\"%s\">" %(self.user.fontSize, self.user.fontColor, self.user.fontFace) + msg
-    msg.replace("~","&#126;")
+      font_properties = "<f x%0.2i%s=\"%s\">" %(self.user.fontSize, self.user.fontColor, self.user.fontFace)
+      if "\n" in msg:
+        msg = msg.replace("\n", "</f></p><p>%s" %(font_properties))
+      msg = font_properties + msg
     self.rawMessage(msg)
 
   def setBgMode(self, mode):
