@@ -12,13 +12,13 @@ def prettyTimeDelta(seconds):
   hours, seconds = divmod(seconds, 3600)
   minutes, seconds = divmod(seconds, 60)
   if days > 0:
-      return '%d d %d h' % (days, hours)
+      return '%dd %dh' % (days, hours)
   elif hours > 0:
-      return '%d h %d m' % (hours, minutes)
+      return '%dh %dm' % (hours, minutes)
   elif minutes > 0:
-      return '%d m %d s' % (minutes, seconds)
+      return '%dm %ds' % (minutes, seconds)
   else:
-      return '%d s' % (seconds)
+      return '%ds' % (seconds)
 
 class bot(ch.RoomManager):
   
@@ -52,15 +52,15 @@ class bot(ch.RoomManager):
     else:
       prfx = False
       
-    if cmd.lower() == "cmd" and prfx:
-        room.message("Available commands (use: /command): cmd, luck, poolluck, price, block1, block2")
+    if cmd.lower() == "help" and prfx:
+        room.message("Available commands (use: /command): help, luck, poolluck, price, block, window")
       
     if cmd.lower() == "luck" and prfx:
         poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
         networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
-        rShares = poolStats['pool_statistics']['roundHashes']*100
+        rShares = poolStats['pool_statistics']['roundHashes']
         diff = networkStats['difficulty']
-        luck = int(rShares/diff)
+        luck = int(rShares*100/diff)
         if (luck >= 0) and (luck <= 1):
           room.message("We are at %s%% for the next block. Great! We just found one! *burger*" % str(luck))
         elif (luck > 1) and (luck <= 20):
@@ -122,10 +122,22 @@ class bot(ch.RoomManager):
         lastBlockFoundTime = lastBlock[0]['ts']
         lastBlockReward = str(lastBlock[0]['value'])
         lastBlockLuck = int(lastBlock[0]['shares']*100/lastBlock[0]['diff'])
-        xmr = (lastBlockReward[:1] + "." + lastBlockReward[2:5])
+        xmr = (lastBlockReward[:1] + "." + lastBlockReward[1:5])
         nowTS = time.time()
         timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
         room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% luck.")
+        
+    if cmd.lower() == "window" and prfx:
+        histRate = requests.get("https://supportxmr.com/api/pool/chart/hashrate/").json()
+        networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
+        diff = networkStats['difficulty']
+        l = len(histRate)
+        hashRate = 0
+        for i in range(l):
+          hashRate += histRate[i]['hs']
+        avgHashRate = hashRate/l
+        window = prettyTimeDelta(2*diff/avgHashRate)
+        room.message("Current payout window is roughly {0}".format(window))        
 
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
