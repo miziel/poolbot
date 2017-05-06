@@ -42,28 +42,25 @@ class bot(ch.RoomManager):
 
     if self.user == user: return
     
-    try: 
-      cmds = ['/help', '/luck', '/poolluck', '/price', '/block', '/window', '/test'] #update if new command
+    try:
+      print 'entered first try:'
+      cmds = ['/help', '/luck', '/poolluck', '/price', '/block', '/window', '/test'] # update if new command
+      wholeAnswer = []
       searchObj = re.findall(r'(/\w+)+', message.body, re.I)
       if searchObj:
           command = list(set(cmds) & set(searchObj))
-          command.reverse()
+          if command:
+              command.reverse()
+          else:
+              return
       else:
-        command = []
-    except:
+        return
       room.message("I'm sorry {}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
 
-    answer = []
     for i in range(len(command)):
-        
-        cmd = command[i]    
-    
-  #   try:
-  #     cmd, args = message.body.split(" ", 1)
-  #   except:
-  #     cmd, args = message.body, ""
-      
-    try:
+         cmd = command[i]    
+
+    try:                  # probably completly unnecessary try (leftover form first version)
       if cmd[0] == "/":
           prfx = True
           cmd = cmd[1:]
