@@ -5,6 +5,7 @@ import requests
 import datetime
 import math
 import time
+import re
 
 def prettyTimeDelta(seconds):
   seconds = int(seconds)
@@ -41,16 +42,35 @@ class bot(ch.RoomManager):
 
     if self.user == user: return
     
-    try:
-      cmd, args = message.body.split(" ", 1)
+    try: 
+      cmds = ['/help', '/luck', '/poolluck', '/price', '/block', '/window', '/test'] #update if new command
+      searchObj = re.findall(r'(/\w+)+', message.body, re.I)
+      if searchObj:
+          command = list(set(cmds) & set(searchObj))
+          command.reverse()
+      else:
+        command = []
     except:
-      cmd, args = message.body, ""
+      room.message("I'm sorry {}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
+
+    answer = []
+    for i in range(len(command)):
+        
+        cmd = command[i]    
+    
+  #   try:
+  #     cmd, args = message.body.split(" ", 1)
+  #   except:
+  #     cmd, args = message.body, ""
       
-    if cmd[0] == "/":
-      prfx = True
-      cmd = cmd[1:]
-    else:
-      prfx = False
+    try:
+      if cmd[0] == "/":
+          prfx = True
+          cmd = cmd[1:]
+      else:
+          prfx = False
+    except:
+      room.message("I'm sorry, I might have a reading problem... Could you please repeat that @{}?".format(user.name))
       
     if cmd.lower() == "help" and prfx:
         room.message("Available commands (use: /command): help, luck, poolluck, price, block, window")
@@ -137,7 +157,14 @@ class bot(ch.RoomManager):
           hashRate += histRate[i]['hs']
         avgHashRate = hashRate/l
         window = prettyTimeDelta(2*diff/avgHashRate)
-        room.message("Current payout window is roughly {0}".format(window))        
+        room.message("Current payout window is roughly {0}".format(window))
+        
+    if cmd.lower() == "test" and prfx:
+            justsain = ("Testing, one, two, three","Oak is strong and also gives shade",
+                        "Cats and dogs each hate the other", "The pipe began to rust while new",
+                        "The ripe taste of cheese improves with age", "Open the crate but don't break the glass",
+                        "The hog crawled under the high fence","Don't try. Do. Or do not.")
+            room.message("{0}. Test successful {1}".format(random.choice(justsain), user.name))
 
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
