@@ -43,7 +43,6 @@ class bot(ch.RoomManager):
     if self.user == user: return
     
     try:
-      print 'entered first try:'
       cmds = ['/help', '/luck', '/poolluck', '/price', '/block', '/window', '/test'] # update if new command
       wholeAnswer = []
       searchObj = re.findall(r'(/\w+)+', message.body, re.I)
