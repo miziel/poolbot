@@ -20,6 +20,18 @@ def prettyTimeDelta(seconds):
   else:
       return '%ds' % (seconds,)
 
+class BackgroundTimer(Thread):
+  def run(self):
+    while 1:
+      Time.sleep(60)
+      poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+      networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
+      rShares = poolStats['pool_statistics']['roundHashes']
+      diff = networkStats['difficulty']
+      effort = int(100*rShares/diff)
+      if (effort >= 0) and (effort <= 1):
+        room.message("*burger*")
+
 class bot(ch.RoomManager):
 
   def onInit(self):
@@ -199,4 +211,6 @@ rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
 
+timer = BackgroundTimer()
+timer.start()
 bot.easy_start(rooms,username,password)
