@@ -32,6 +32,26 @@ class BackgroundTimer(Thread):
       if (effort >= 0) and (effort <= 1):
         room.message("*burger*")
 
+  def onInit(self):
+    self.setNameColor("505050")
+    self.setFontColor("000000")
+    self.setFontFace("Arial")
+    self.setFontSize(11)
+
+  def onConnect(self, room):
+    print("Connected")
+
+  def onReconnect(self, room):
+    print("Reconnected")
+
+  def onDisconnect(self, room):
+    print("Disconnected")
+
+rooms = [""] #list rooms you want the bot to connect to
+username = "" #for tests can use your own - triger bot as anon
+password = ""
+bot.easy_start(rooms,username,password)
+
 class bot(ch.RoomManager):
 
   def onInit(self):
