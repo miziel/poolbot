@@ -9,4 +9,5 @@ supportXMR chatango PoolBot project
 /price      - Displays XMR price in BTC and USD
 /block      - Displays info about the last block found
 /window     - Displays estimated payout window in days/hours/minutes
+/test       - Displays random test messages
 ```
