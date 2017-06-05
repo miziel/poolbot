@@ -79,8 +79,12 @@ class bot(ch.RoomManager):
           room.message("We are at %s%% for the next block. Damn time to find one, don't you think?" % str(luck))
         elif (luck > 300) and (luck <= 400):
           room.message("We are at %s%% for the next block. That's a lot of red." % str(luck))
-        else:
+        elif (luck == 404):
+          room.message("%s block not found :(" % str(luck))
+        elif (luck > 400) and (luck <= 500):
           room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
+        else:
+          room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
           
     if cmd.lower() == "poolluck" and prfx:
         poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
@@ -88,8 +92,8 @@ class bot(ch.RoomManager):
         blocklist = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=" + str(blocknum)).json()
         totaldiff = 0
         totalshares = 0
-        startingblock = 1  # number of the starting block from which to scan the list
-        for i in reversed(range(0, blocknum-startingblock+1)):
+        #startingblock = 1  # number of the starting block from which to scan the list - maybe allow people to pass this number as a parameter?
+        for i in reversed(range(0, blocknum)): #-startingblock+1)):
             totalshares += blocklist[i]['shares']
             if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
@@ -137,7 +141,7 @@ class bot(ch.RoomManager):
           hashRate += histRate[i]['hs']
         avgHashRate = hashRate/l
         window = prettyTimeDelta(2*diff/avgHashRate)
-        room.message("Current payout window is roughly {0}".format(window))        
+        room.message("Current pplns window is roughly {0}".format(window))        
 
 rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
