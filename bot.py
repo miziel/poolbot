@@ -166,7 +166,7 @@ class bot(ch.RoomManager):
             lastBlock = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = lastBlock[0]['ts']
             lastBlockReward = str(lastBlock[0]['value'])
-            lastBlockLuck = int(lastBlock[0]['shares']*100/lastBlock[0]['diff'])
+            lastBlockLuck = int(round(lastBlock[0]['shares']*100/lastBlock[0]['diff']))
             xmr = (lastBlockReward[:1] + "." + lastBlockReward[1:5])
             nowTS = time.time()
             timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
