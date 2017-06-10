@@ -1,3 +1,4 @@
+from __future__ import division
 import ch
 import urllib
 import json
@@ -94,7 +95,7 @@ class bot(ch.RoomManager):
             networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
             rShares = poolStats['pool_statistics']['roundHashes']
             diff = networkStats['difficulty']
-            luck = int(100*rShares/diff)
+            luck = int(round(100*rShares/diff))
             if (luck >= 0) and (luck <= 1):
               room.message("We are at %s%% for the next block. Great! We just found one! *burger*" % str(luck))
             elif (luck > 1) and (luck <= 20):
