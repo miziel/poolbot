@@ -125,6 +125,8 @@ class bot(ch.RoomManager):
           		room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
         	  else:
           		room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
+          	if lastblock[0]['valid'] == 0:
+          	  room.message("The last block was invalid :(")
 
         if cmd.lower() == "pooleffort" and prfx:
             poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
