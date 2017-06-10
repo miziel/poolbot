@@ -143,7 +143,7 @@ class bot(ch.RoomManager):
         window = prettyTimeDelta(2*diff/avgHashRate)
         room.message("Current pplns window is roughly {0}".format(window))        
 
-rooms = [""] #list rooms you want the bot to connect to
+rooms = ["testroom3"] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
 
