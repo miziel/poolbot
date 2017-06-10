@@ -182,7 +182,7 @@ class bot(ch.RoomManager):
             nowTS = time.time()
             timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
             if lastBlockLuck < 1:
-              room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago quite efortlessly ("+ str(lastBlockLuck) + "%)" ) 
+              room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago quite effortlessly ("+ str(lastBlockLuck) + "%)" ) 
             else:
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% effort.")
               
@@ -207,7 +207,7 @@ class bot(ch.RoomManager):
                         "Don't test. Ask. Or ask not.")
             room.message(random.choice(justsain))
 
-rooms = ["testroom3"] #list rooms you want the bot to connect to
+rooms = [""] #list rooms you want the bot to connect to
 username = "" #for tests can use your own - triger bot as anon
 password = ""
 
