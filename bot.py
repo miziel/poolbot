@@ -122,11 +122,11 @@ class bot(ch.RoomManager):
             elif (luck == 404):
 	            room.message("404 block not found :(")
             elif (luck > 400) and (luck <= 500):
-          		room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
-        	  else:
-          		room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
-          	if lastblock[0]['valid'] == 0:
-          	  room.message("The last block was invalid :(")
+              room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
+            else:
+              room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
+            if lastblock[0]['valid'] == 0:
+              room.message("The last block was invalid :(")
 
         if cmd.lower() == "pooleffort" and prfx:
             poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
@@ -135,7 +135,7 @@ class bot(ch.RoomManager):
             totalshares = 0
             totaldiff = 0
             #startingblock = 1  # number of the starting block from which to scan the list - maybe allow people to pass this number as a parameter?
-        	  for i in reversed(range(0, blocknum)): #-startingblock+1)):
+            for i in reversed(range(0, blocknum)): #-startingblock+1)):
               totalshares += blocklist[i]['shares']
               if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
