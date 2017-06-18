@@ -55,9 +55,9 @@ class bot(ch.RoomManager):
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
               '/window', '/test']#update if new command
       searchObj = re.findall(r'(/\w+)', message.body, re.I)
-      if '/all' in searchObj:
-        command = ['/effort', '/pooleffort', '/block', '/window' , '/price']
-      elif searchObj:
+      #if '/all' in searchObj:
+      #  command = ['/effort', '/pooleffort', '/block', '/window' , '/price']
+      if searchObj:
         if '/luck' in searchObj and user.name == 'm5m400':
           searchObj[searchObj.index('/luck')] = '/effort'
           command = list(set(cmds) & set(searchObj))
@@ -221,8 +221,7 @@ class bot(ch.RoomManager):
                         "@" + user.name + ", you are fined one credit for violation of the verbal morality statute.",
                         "42", "My logic is undeniable.", "Danger, @" + user.name + ", danger!",
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
-                        "Don't test. Ask. Or ask not.",
-                        "This is my pool. There are many like it, but this one is mine!")
+                        "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!")
             room.message(random.choice(justsain))
 
 rooms = [""] #list rooms you want the bot to connect to
