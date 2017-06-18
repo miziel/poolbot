@@ -139,7 +139,7 @@ class bot(ch.RoomManager):
               totalshares += blocklist[i]['shares']
               if blocklist[i]['valid'] == 1:
                 totaldiff += blocklist[i]['diff']
-            room.message("Overall pool effort is " + str(100*totalshares/totaldiff) + "%")
+            room.message("Overall pool effort is " + str(round(100*totalshares/totaldiff)) + "%")
 
         if cmd.lower() == "price" and prfx:
             self.setFontFace("8")
