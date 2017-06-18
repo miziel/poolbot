@@ -143,12 +143,20 @@ class bot(ch.RoomManager):
 
         if cmd.lower() == "price" and prfx:
             self.setFontFace("8")
-            poloniex = requests.get("https://poloniex.com/public?command=returnTicker").json()
-            BTC_XMR_polo = poloniex['BTC_XMR']['last']
-            USDT_XMR_polo = poloniex['USDT_XMR']['last']
-            cryptocompare = requests.get("https://min-api.cryptocompare.com/data/price?fsym=XMR&tsyms=BTC,USD").json()
-            BTC_XMR_cc = cryptocompare['BTC']
-            USD_XMR_cc = cryptocompare['USD']
+            try:
+                poloniex = requests.get("https://poloniex.com/public?command=returnTicker").json()
+                BTC_XMR_polo = poloniex['BTC_XMR']['last']
+                USDT_XMR_polo = poloniex['USDT_XMR']['last']
+            except KeyError:
+                BTC_XMR_polo = ' n/a '
+                USDT_XMR_polo = ' n/a '
+            try:
+                cryptocompare = requests.get("https://min-api.cryptocompare.com/data/price?fsym=XMR&tsyms=BTC,USD").json()
+                BTC_XMR_cc = cryptocompare['BTC']
+                USD_XMR_cc = cryptocompare['USD']
+            except KeyError:
+                BTC_XMR_cc = ' n/a '
+                USD_XMR_cc = ' n/a '
             try:
                 shapeshift = requests.get("https://shapeshift.io/rate/xmr_btc").json()
                 BTC_XMR_shape = shapeshift['rate']   
@@ -159,12 +167,21 @@ class bot(ch.RoomManager):
                 USDT_XMR_shape = shapeshift['rate']
             except KeyError:
                 USDT_XMR_shape = ' n/a '
-            kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRXBT").json()
-            BTC_XMR_krak = kraken['result']['XXMRXXBT']['c'][0]
-            kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRUSD").json()
-            USD_XMR_krak = kraken['result']['XXMRZUSD']['c'][0]
-            kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMREUR").json()
-            EUR_XMR_krak = kraken['result']['XXMRZEUR']['c'][0]
+            try:
+                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRXBT").json()
+                BTC_XMR_krak = kraken['result']['XXMRXXBT']['c'][0]
+            except KeyError:
+                BTC_XHR_krak = ' n/a '
+            try:
+                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRUSD").json()
+                USD_XMR_krak = kraken['result']['XXMRZUSD']['c'][0]
+            except KeyError:
+                USD_XMR_krak = ' n/a '
+            try:
+                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMREUR").json()
+                EUR_XMR_krak = kraken['result']['XXMRZEUR']['c'][0]
+            except KeyError:
+                EUR_XMR_krak = ' n/a '
             room.message(("\n|| {10:<10} | {11:<5} {12:^5.5} | {13:<4} {14:^7.7} | {15:<4} {16:<^5.5} ||"
                           "\n|| {0:<10} | {1:<5} {2:^5.5} | {3:<4} {4:^7.7} ||"
                           "\n|| {5:<10} | {6:<5} {7:^5.5} | {8:<4} {9:^7.7} ||"
@@ -204,7 +221,8 @@ class bot(ch.RoomManager):
                         "@" + user.name + ", you are fined one credit for violation of the verbal morality statute.",
                         "42", "My logic is undeniable.", "Danger, @" + user.name + ", danger!",
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
-                        "Don't test. Ask. Or ask not.")
+                        "Don't test. Ask. Or ask not.",
+                        "This is my pool. There are many like it, but this one is mine!")
             room.message(random.choice(justsain))
 
 rooms = [""] #list rooms you want the bot to connect to
