@@ -53,7 +53,7 @@ class bot(ch.RoomManager):
 
     try: 
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
-              '/window', '/test']#update if new command
+              '/window', '/test', '/normalluck']#update if new command
       searchObj = re.findall(r'(/\w+)', message.body, re.I)
       #if '/all' in searchObj:
       #  command = ['/effort', '/pooleffort', '/block', '/window' , '/price']
@@ -62,6 +62,8 @@ class bot(ch.RoomManager):
           searchObj[searchObj.index('/luck')] = '/effort'
           command = list(set(cmds) & set(searchObj))
           command.reverse()
+        elif '/normalluck' in searchObj and (user.name == 'endor' or user.name == 'miziel0'):
+          command = list(set(cmds) & set(searchObj))
         else:
           command = list(set(cmds) & set(searchObj))
           command.reverse()
@@ -213,7 +215,26 @@ class bot(ch.RoomManager):
               hashRate += histRate[i]['hs']
             avgHashRate = hashRate/l
             window = prettyTimeDelta(2*diff/avgHashRate)
-            room.message("Current pplns window is roughly {0}".format(window)) 
+            room.message("Current pplns window is roughly {0}".format(window))
+        
+        if cmd.lower() == "normalluck" and prfx:
+            poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+            blocknum = poolstats['pool_statistics']['totalBlocksFound']
+            blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(blocknum)).json()
+            # approximates the binomial distribution using a normal one, close enough ;)
+            
+            for bl in [10, 50, None]:
+                share_sum = sum(b['shares'] for b in blocks[:bl])
+                diff_sum = sum(b['diff'] for b in blocks[:bl])
+                bl = len(blocks[:bl])
+                avg_diff = diff_sum / bl
+                mu = share_sum / avg_diff - 0.5
+                sigma2 = share_sum / avg_diff * (1 - 1 / avg_diff)
+                bias = (bl - mu) / sqrt(sigma2)
+                prob = 0.5 + 0.5 * erf(bias / sqrt(2))
+                room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % bl, bias, prob)
+                #print("  std deviations better than the mode: %.2f" % bias)
+                #print("  probability to be worse: %.5f" % prob)
 
         if cmd.lower() == "test" and prfx:
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
