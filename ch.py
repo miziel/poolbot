@@ -963,9 +963,9 @@ class Room:
     msg, n, f = _clean_message(rawmsg)
     if name == "":
       nameColor = None
-      name = "#" + args[2]
-      if name == "#":
-        name = "!anon" + _getAnonId(n, puid)
+      name = "" + args[2]
+      if name == "":
+        name = "anon" + _getAnonId(n, puid)
     else:
       if n: nameColor = _parseNameColor(n)
       else: nameColor = None
@@ -1015,9 +1015,9 @@ class Room:
     msg, n, f = _clean_message(rawmsg)
     if name == "":
       nameColor = None
-      name = "#" + args[2]
-      if name == "#":
-        name = "!anon" + _getAnonId(n, puid)
+      name = "" + args[2]
+      if name == "":
+        name = "anon" + _getAnonId(n, puid)
     else:
       if n: nameColor = _parseNameColor(n)
       else: nameColor = None
