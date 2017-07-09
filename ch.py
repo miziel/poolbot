@@ -2401,3 +2401,4 @@ class Message:
   raw = property(_getRaw)
   nameColor = property(_getNameColor)
   unid = property(_getUnid)
+
