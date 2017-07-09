@@ -7,28 +7,6 @@ import requests
 import random
 import time
 import re
-import threading
-#import Queue
-
-#class BlockFinder(threading.Thread):
-#    """ Threading example class
-#    The run() method will be started and it will run in the background
-#    until the application exits.
-#    """
-#
-#    def __init__(self):
-#        self.__init__()
-#
-#    def run(self, room, blocknum, q):
-#        while True:
-#          print "Enter while loop", blocknum
-#          time.sleep(2)
-#        poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-#        blocknum_now = poolstats['pool_statistics']['totalBlocksFound']
-#          if True:
-#            print "Check if true"
-#            room.message("Testing, testing")
-#            print room.message
           
 def prettyTimeDelta(seconds):
   seconds = int(seconds)
@@ -45,41 +23,28 @@ def prettyTimeDelta(seconds):
       return '%ds' % (seconds,)
 
 class bot(ch.RoomManager):
+  _lastFoundBlockNum = 0
+  _lastFoundBlockLuck = 0
+  _lastFoundBlockValue = 0
+  _lastFoundBlockTime = 0
 
-#  def _watcher(self, blocknum, q):
-#    while True:
-#        print "Enter while loop", blocknum
-#        time.sleep(10)
-#        poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-#        blocknum_now = poolstats['pool_statistics']['totalBlocksFound']
-#        if True:
-#            print "Check if true"
-#            room.message("Testing, testing")
-#            print room.message
-#    q.put(blocknum)
-
-#    print blocknum
-    
-#  def _messager(self, room, q):
-#    time.sleep(5)
-#    b = q.get() 
-#    print "Messager ", b
-#    room.message("Messager " + str(b))
-        
-#  def watcher_threaded(self, room):
-#        poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-#        blocknum = poolstats['pool_statistics']['totalBlocksFound']
-#        q = Queue.Queue()
-#        t1 = BlockFinder(self, room, blocknum, q)
-#        t2 = threading.Thread(target=self._messager(room, q))
-#        t1.start()
-#        t2.start()
+  def getLastFoundBlockNum(self):
+    try:
+      poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+      blockstats = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
+      self._lastFoundBlockNum = poolstats['pool_statistics']['totalBlocksFound']
+      self._lastFoundBlockLuck = int(round(blockstats[0]['shares']*100/blockstats[0]['diff']))
+      self._lastFoundBlockValue = str(round(blockstats[0]['value']/1000000000000, 5))
+      self._lastFoundBlockTime = poolstats['pool_statistics']['lastBlockFoundTime']
+    except:
+      pass          
 
   def onInit(self):
     self.setNameColor("CC6600")
     self.setFontColor("000000")
     self.setFontFace("0")
     self.setFontSize(11)
+    self.getLastFoundBlockNum()          
 
   def onConnect(self, room):
     print("Connected")
@@ -89,7 +54,17 @@ class bot(ch.RoomManager):
      
   def onDisconnect(self, room):
     print("Disconnected")
-    # self.reconnect()
+
+  def checkForNewBlock(self, room):
+    prevBlockNum = self._lastFoundBlockNum
+    prevBlockTime = self._lastFoundBlockTime
+    if prevBlockNum == 0: #check for case we cant read the number
+      return
+    self.getLastFoundBlockNum()
+    if self._lastFoundBlockNum > prevBlockNum:
+      BlockTimeAgo = prettyTimeDelta(int(self._lastFoundBlockTime - prevBlockTime))
+      room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck
+) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + self._lastFoundBlockValue)
 
    # def onJoin(self, room, user):
      # print(user.name + " joined the chat!")
@@ -145,7 +120,9 @@ class bot(ch.RoomManager):
               rShares = rShares + previousshares
             diff = networkStats['difficulty']
             luck = int(round(100*rShares/diff))
-            if (luck >= 0) and (luck <= 1):
+            if rShares == 0:
+              room.message("Until further notice I make 0% effort. I'm tired. Ask someone else.")
+            elif (luck >= 0) and (luck <= 1):
               room.message("We are at %s%% for the next block. Great! We just found one! *burger*" % str(luck))
             elif (luck > 1) and (luck <= 20):
               room.message("We are at %s%% for the next block. Noice :)" % str(luck))
@@ -161,11 +138,11 @@ class bot(ch.RoomManager):
               room.message("We are at %s%% for the next block. Wouldn't mind finding one NOW!" % str(luck))
             elif (luck > 200) and (luck <= 300):
               room.message("We are at %s%% for the next block. Damn time to find one, don't you think?" % str(luck))
-            elif (luck > 300) and (luck <= 400):
+            elif (luck > 300) and (luck <= 500):
               room.message("We are at %s%% for the next block. That's a lot of red." % str(luck))
             elif (luck == 404):
               room.message("404 block not found :|")
-            elif (luck > 400) and (luck <= 501):
+            elif (luck > 500) and (luck <= 715):
               room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
             else:
               room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
