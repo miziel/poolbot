@@ -193,13 +193,19 @@ class bot(ch.RoomManager):
               else:
                 message = "Pool effort for the last " + str(blocknum) + " blocks is "
             blocklist = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=" + str(blocknum)).json()
-            totaldiff = 0
             totalshares = 0
+            valids = 0
+            lucks = []
             for i in range(blocknum):
               totalshares += blocklist[i]['shares']
               if blocklist[i]['valid'] == 1:
-                totaldiff += blocklist[i]['diff']
-            room.message(message + str(int(round(100*totalshares/totaldiff))) + "%")
+                diff = blocklist[i]['diff']
+                lucks.append(totalshares/diff)
+                valids += 1
+                totalshares = 0
+            totaleffort = sum(lucks)/valids
+            # average effort is simply the average of all efforts: sum of efforts / number of valid blocks
+            room.message(message + str(int(round(100*totaleffort))) + "%")
 
         if cmd.lower() == "price":
             self.setFontFace("8")
