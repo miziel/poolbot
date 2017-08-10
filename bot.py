@@ -196,15 +196,26 @@ class bot(ch.RoomManager):
             totalshares = 0
             valids = 0
             lucks = []
-            for i in range(blocknum):
+            # Average effort is the average of all efforts: sum of efforts / number of valid blocks.
+            # Gotta walk the list in reverse, so that we go through the blocks in the order they
+            # were found. Otherwise, invalids will mess up the values, since their shares would go into
+            # the previous block instead of the following one.
+            for i in reversed(range(blocknum)):
               totalshares += blocklist[i]['shares']
               if blocklist[i]['valid'] == 1:
                 diff = blocklist[i]['diff']
                 lucks.append(totalshares/diff)
                 valids += 1
                 totalshares = 0
+              # Disregard the following if block: if the last block was invalid, it will not be taken
+              # into account until a valid one is found.
+              #if blocklist[blocknum]['valid'] == 0: # I'll leave this here anyway :D
+                #lucks.append(totalshares/diff)
+                # If the last block was invalid, temporarily pretend that it's valid and take it
+                # into accound. The displayed value will be incorrect until a valid block is found.
+                # Given the number of blocks found by the pool already, the impact will be negligible.
             totaleffort = sum(lucks)/valids
-            # average effort is simply the average of all efforts: sum of efforts / number of valid blocks
+
             room.message(message + str(int(round(100*totaleffort))) + "%")
 
         if cmd.lower() == "price":
