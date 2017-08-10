@@ -1,5 +1,5 @@
-#from __future__ 
-import division
+from __future__ import division
+from math import erf, sqrt
 import ch
 import urllib
 import json
@@ -8,7 +8,7 @@ import random
 import time
 import re
 import threading
-import Queue
+#import Queue
 
 #class BlockFinder(threading.Thread):
 #    """ Threading example class
@@ -113,18 +113,17 @@ class bot(ch.RoomManager):
       searchObjCmd = []
       searchObjArg = []
       for i in range(len(searchObj)):
-        print i
+        #print(i) # this is for debugging I suppose, right?
         for j in range(len(cmds)):
-          print j
+          #print(j) # as above
           if searchObj[i][0] == cmds[j]:
             searchObjCmd.append(searchObj[i][0])
             searchObjArg.append(searchObj[i][1])
-      print searchObjCmd
-      print searchObjArg
+      #print(searchObjCmd) # same
+      #print(searchObjArg) # same
       command = searchObjCmd
       argument = searchObjArg
     except:
-
       room.message("I'm sorry {}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
 
     for i in range(len(command)):
@@ -185,20 +184,28 @@ class bot(ch.RoomManager):
                 message = "Just use /block... Effort for the last one was "
               elif blocknum > totalblocks:
                 blocknum = totalblocks
-                message = "You have to wait till we find so many. So far we found " + str(blocknum) + " blocks with overall effort of "
+                message = "You have to wait till we find so many. So far we found " + str(blocknum) + " blocks, with an overall effort of "
               elif blocknum == 0:
                 blocknum = random.randrange(10, totalblocks)
                 message = "Yeah, nice try... Here's some random effort for you: "
+              elif blocknum == totalblocks:
+                message = "Overall pool effort is "
               else:
                 message = "Pool effort for the last " + str(blocknum) + " blocks is "
             blocklist = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=" + str(blocknum)).json()
-            totaldiff = 0
             totalshares = 0
+            valids = 0
+            lucks = []
             for i in range(blocknum):
               totalshares += blocklist[i]['shares']
               if blocklist[i]['valid'] == 1:
-                totaldiff += blocklist[i]['diff']
-            room.message(message + str(int(round(100*totalshares/totaldiff))) + "%")
+                diff = blocklist[i]['diff']
+                lucks.append(totalshares/diff)
+                valids += 1
+                totalshares = 0
+            totaleffort = sum(lucks)/valids
+            # average effort is simply the average of all efforts: sum of efforts / number of valid blocks
+            room.message(message + str(int(round(100*totaleffort))) + "%")
 
         if cmd.lower() == "price":
             self.setFontFace("8")
@@ -269,23 +276,42 @@ class bot(ch.RoomManager):
             window = prettyTimeDelta(2*diff/avgHashRate)
             room.message("Current pplns window is roughly {0}".format(window))
 
-        if cmd.lower() == "normalluck" and prfx:
+        if cmd.lower() == "normalluck":
             poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-            blocknum = poolstats['pool_statistics']['totalBlocksFound']
-            blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(blocknum)).json()
+            totalblocks = poolstats['pool_statistics']['totalBlocksFound']
+            blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(totalblocks)).json()
+            if not arg.isdigit():
+              blocknum = totalblocks # the message for this case is handled in the "blocknum == totalblocks" case
+              startmessage = "Compared to the average, the overall standard deviation for this pool is "
+            if arg.isdigit(): # no need to include the case blocknum < 0, because when writing "-1" the '-' will be picked up as a non-digit first, thus triggering the previous if
+              blocknum = int(arg)                
+              if blocknum == 1:
+                startmessage = "Standard deviation for the last block was "
+              elif blocknum > totalblocks:
+                blocknum = totalblocks
+                startmessage = "You have to wait till we find so many. So far we found " + str(blocknum) + " blocks with an overall standard deviation of "
+              elif blocknum == 0:
+                blocknum = random.randrange(10, totalblocks)
+                startmessage = "Yeah, nice try... Here's some random result for you.\nStandard deviation for the last " + str(blocknum) + " blocks was "
+              elif blocknum == totalblocks:
+                startmessage = "Compared to the average, the overall standard deviation for this pool is "
+              else:
+                startmessage = "Compared to the average, the standard deviation for the last " + str(blocknum) + " blocks is "
             # approximates the binomial distribution using a normal one, close enough ;)
-            for bl in [10, 50, None]:
-                share_sum = sum(b['shares'] for b in blocks[:bl])
-                diff_sum = sum(b['diff'] for b in blocks[:bl])
-                bl = len(blocks[:bl])
-                avg_diff = diff_sum / bl
-                mu = share_sum / avg_diff - 0.5
-                sigma2 = share_sum / avg_diff * (1 - 1 / avg_diff)
-                bias = (bl - mu) / sqrt(sigma2)
-                prob = 0.5 + 0.5 * erf(bias / sqrt(2))
-                room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % bl, bias, prob)
-                #print("  std deviations better than the mode: %.2f" % bias)
-                #print("  probability to be worse: %.5f" % prob)
+            #for bl in [10, 50, None]:
+            bl = blocknum
+            #print(bl)
+            share_sum = sum(b['shares'] for b in blocks[:bl])
+            diff_sum = sum(b['diff'] for b in blocks[:bl])
+#            bl = len(blocks[:bl]) # this line is useless without the for loop
+            #print(bl)
+            avg_diff = diff_sum / bl
+            mu = share_sum / avg_diff - 0.5
+            sigma2 = share_sum / avg_diff * (1 - 1 / avg_diff)
+            bias = (bl - mu) / sqrt(sigma2)
+            prob = (0.5 + 0.5 * erf(bias / sqrt(2)))*100
+            room.message("{} {:.2f}\nProbability to be worse: {:.5f}%".format(startmessage, bias, prob))
+            #room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % (bl, bias, prob))
 
         if cmd.lower() == "test":
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
@@ -296,8 +322,8 @@ class bot(ch.RoomManager):
                         "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!")
             room.message(random.choice(justsain))
 
-rooms = [""] #list rooms you want the bot to connect to
-username = "" #for tests can use your own - triger bot as anon
+rooms = ["testroom3"] #list rooms you want the bot to connect to
+username = "poolbot2" #for tests can use your own - triger bot as anon
 password = ""
 
 bot.easy_start(rooms,username,password)
