@@ -1,4 +1,3 @@
-from __future__ import division
 from math import erf, sqrt
 import ch
 import urllib
@@ -80,26 +79,55 @@ class bot(ch.RoomManager):
 
     try: 
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
-              '/window', '/test', '/normalluck', '/watch']#update if new command
-      searchObj = re.findall(r'(\/\w+)(\.\d+)?', message.body, re.I)
+              '/window', '/test'] # update if new command
+      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] #update if new helper
+      searchObj = re.findall(r'(\/\w+)(\.\d+)?|(\?\w+)', message.body, re.I)
       if '/all' in searchObj:
-      #  command = ['/effort', '/pooleffort', '/block', '/window' , '/price']
         room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
+      if '/nextblock' in searchObj:
+        room.message("s0on&trade;")
       searchObjCmd = []
       searchObjArg = []
+      searchObjHlp = []
       for i in range(len(searchObj)):
-        #print(i) # this is for debugging I suppose, right?
         for j in range(len(cmds)):
-          #print(j) # as above
           if searchObj[i][0] == cmds[j]:
             searchObjCmd.append(searchObj[i][0])
             searchObjArg.append(searchObj[i][1])
-      #print(searchObjCmd) # same
-      #print(searchObjArg) # same
+        if searchObj[i][2]:
+          searchObjHlp.append(searchObj[i][2])
       command = searchObjCmd
       argument = searchObjArg
+      helper = searchObjHlp
     except:
       room.message("I'm sorry {}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
+
+    for i in range(len(helper)):
+      hlp = helper[i]
+      if hlp in hlps:
+        hlp = hlp[1:]
+
+        if hlp.lower() == "list":
+            room.message("?pplns - links to explanation, ?register - how to register, ?RTFN - notice about expected downtime, ?bench - our benchmarks")
+
+        if hlp.lower() == "help":
+            room.message("The answer to your question was probably given already. If not, it's 42. Now, you can ask the question.")
+            
+        if hlp.lower() == "register":
+            room.message("You don't have to register to mine with us, unless you want to change your payout threshold (min 0.3 XMR). But if you really, really want to just read carefully:\n"
+                         "1. Put \"workername:your@email.com\" as password in your miner (\"workername\" is just a name you give to each of your devices, eg: \"laptop-1\").\n"
+                         "2. Mine at least one share.\n"
+                         "3. Put your address on the Dashboard. You should see a graph with your worker named \"workername\" below.\n"
+                         "4. Login to the website with your address and use the email (your@email.com) as password)")
+
+        if hlp.lower() == "pplns":
+            room.message("ELI5 - http://give-me-coins.com/support/faq/what-is-pplns/ | \"Trust me, I'm an engineer\" - https://bitcointalk.org/index.php?topic=39832.msg486012#msg486012")
+
+        if hlp.lower() == "rtfn":
+            room.message(" MAINTENANCE NOTICE: 8.9.2017 05:00 - 07:00 CEST our ISP is performing upgrades to their core routers. They claim maximum 15 minutes of downtime in that period. Be aware!")
+
+        if hlp.lower() == "bench":
+            room.message("https://docs.google.com/spreadsheets/d/18IrFEhWP89oG_BTUsQGS5IDG8LUYjCHDiRQkOuQ4a9A/edit#gid=0")
 
     for i in range(len(command)):
         cmd = command[i]
