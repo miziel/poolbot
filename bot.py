@@ -53,11 +53,14 @@ class bot(ch.RoomManager):
      
   def onDisconnect(self, room):
     print("Disconnected")
+    for room in self.rooms:
+      room.reconnect()
+    room.message("Warning: self-destruction cancelled. Systems online")
 
   def checkForNewBlock(self, room):
     prevBlockNum = self._lastFoundBlockNum
     prevBlockTime = self._lastFoundBlockTime
-    if prevBlockNum == 0: #check for case we cant read the number
+    if prevBlockNum == 0: # check for case we cant read the number
       return
     self.getLastFoundBlockNum()
     if self._lastFoundBlockNum > prevBlockNum:
@@ -80,7 +83,7 @@ class bot(ch.RoomManager):
     try: 
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
               '/window', '/test'] # update if new command
-      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] #update if new helper
+      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] # update if new helper
       searchObj = re.findall(r'(\/\w+)(\.\d+)?|(\?\w+)', message.body, re.I)
       if '/all' in searchObj:
         room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
@@ -100,7 +103,7 @@ class bot(ch.RoomManager):
       argument = searchObjArg
       helper = searchObjHlp
     except:
-      room.message("I'm sorry {}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
+      room.message("I'm sorry @{}, I might have misunderstood what you wrote... Could you repeat please?".format(user.name))
 
     for i in range(len(helper)):
       hlp = helper[i]
@@ -166,11 +169,13 @@ class bot(ch.RoomManager):
               room.message("We are at %s%% for the next block. Wouldn't mind finding one NOW!" % str(luck))
             elif (luck > 200) and (luck <= 300):
               room.message("We are at %s%% for the next block. Damn time to find one, don't you think?" % str(luck))
-            elif (luck > 300) and (luck <= 500):
-              room.message("We are at %s%% for the next block. That's a lot of red." % str(luck))
             elif (luck == 404):
               room.message("404 block not found :|")
-            elif (luck > 500) and (luck <= 715):
+            elif (luck > 300) and (luck <= 500):
+              room.message("We are at %s%% for the next block. That's a lot of red." % str(luck))
+            elif (luck > 500) and (luck <= 700):
+              room.message("Look, the pool is fine. But we gotta find the damn block! %s%% and counting..." % str(luck))
+            elif (luck > 700) and (luck <= 833):
               room.message("We are at %s%% for the next block. Aiming for a new record, are we?" % str(luck))
             else:
               room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
@@ -314,20 +319,20 @@ class bot(ch.RoomManager):
               else:
                 startmessage = "Compared to the average, the standard deviation for the last " + str(blocknum) + " blocks is "
             # approximates the binomial distribution using a normal one, close enough ;)
-            #for bl in [10, 50, None]:
+            # for bl in [10, 50, None]:
             bl = blocknum
-            #print(bl)
+            # print(bl)
             share_sum = sum(b['shares'] for b in blocks[:bl])
             diff_sum = sum(b['diff'] for b in blocks[:bl])
-#            bl = len(blocks[:bl]) # this line is useless without the for loop
-            #print(bl)
+            # bl = len(blocks[:bl]) # this line is useless without the for loop
+            # print(bl)
             avg_diff = diff_sum / bl
             mu = share_sum / avg_diff - 0.5
             sigma2 = share_sum / avg_diff * (1 - 1 / avg_diff)
             bias = (bl - mu) / sqrt(sigma2)
             prob = (0.5 + 0.5 * erf(bias / sqrt(2)))*100
             room.message("{} {:.2f}\nProbability to be worse: {:.5f}%".format(startmessage, bias, prob))
-            #room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % (bl, bias, prob))
+            # room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % (bl, bias, prob))
 
         if cmd.lower() == "test":
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
@@ -335,11 +340,12 @@ class bot(ch.RoomManager):
                         "@" + user.name + ", you are fined one credit for violation of the verbal morality statute.",
                         "42", "My logic is undeniable.", "Danger, @" + user.name + ", danger!",
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
-                        "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!")
+                        "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!", "I used to be a miner like you, but then I took an ASIC to the knee")
             room.message(random.choice(justsain))
 
-rooms = ["testroom3"] #list rooms you want the bot to connect to
-username = "poolbot2" #for tests can use your own - triger bot as anon
+rooms = [""] #list rooms you want the bot to connect to
+username = "" #for tests can use your own - triger bot as anon
 password = ""
+checkForNewBlockInterval = 10 # how often to check for new block, in seconds. If not set, default value of 20 would be used
 
-bot.easy_start(rooms,username,password)
+bot.easy_start(rooms,username,password, checkForNewBlockInterval)
