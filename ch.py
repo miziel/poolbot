@@ -724,6 +724,7 @@ class Room:
     self._premium = False
     self._userCount = 0
     self._pingTask = None
+    self._blockTask = None
     self._botname = None
     self._currentname = None
     self._users = dict()
@@ -748,6 +749,8 @@ class Room:
     self._wbuf = b""
     self._auth()
     self._pingTask = self.mgr.setInterval(self.mgr._pingDelay, self.ping)
+    self._blockTask = self.mgr.setInterval(self.mgr._blockDelay, self.checkForNewBlock)
+	
     if not self._reconnecting: self.connected = True
 
   def reconnect(self):
@@ -775,6 +778,7 @@ class Room:
       user.clearSessionIds(self)
     self._userlist = list()
     self._pingTask.cancel()
+    self._blockTask.cancel()
     self._sock.close()
     if not self._reconnecting: del self.mgr._rooms[self.name]
 
@@ -1173,6 +1177,11 @@ class Room:
     """Send a ping."""
     self._sendCommand("")
     self._callEvent("onPing")
+	
+  def checkForNewBlock(self):
+    """check for new block"""
+    self._sendCommand("")
+    self._callEvent("checkForNewBlock")
 
   def rawMessage(self, msg):
     """
@@ -1489,6 +1498,7 @@ class RoomManager:
   _PMPort = 5222
   _TimerResolution = 0.2 #at least x times per second
   _pingDelay = 20
+  _blockDelay = 20
   _userlistMode = Userlist_Recent
   _userlistUnique = True
   _userlistMemory = 50
@@ -1500,9 +1510,10 @@ class RoomManager:
   ####
   # Init
   ####
-  def __init__(self, name = None, password = None, pm = True):
+  def __init__(self, name = None, password = None, pm = True, checkForNewBlockInterval = 20):
     self._name = name
     self._password = password
+    self._blockDelay = checkForNewBlockInterval
     self._running = False
     self._tasks = set()
     self._rooms = dict()
@@ -2134,7 +2145,7 @@ class RoomManager:
       self._tick()
 
   @classmethod
-  def easy_start(cl, rooms = None, name = None, password = None, pm = True):
+  def easy_start(cl, rooms = None, name = None, password = None, checkForNewBlockInterval = None, pm = True):
     """
     Prompts the user for missing info, then starts.
 
@@ -2151,7 +2162,8 @@ class RoomManager:
     if name == "": name = None
     if not password: password = str(input("User password: "))
     if password == "": password = None
-    self = cl(name, password, pm = pm)
+    if not checkForNewBlockInterval: checkForNewBlockInterval = 20
+    self = cl(name, password, pm, checkForNewBlockInterval)
     for room in rooms:
       self.joinRoom(room)
     self.main()
@@ -2401,4 +2413,3 @@ class Message:
   raw = property(_getRaw)
   nameColor = property(_getNameColor)
   unid = property(_getUnid)
-
