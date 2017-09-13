@@ -97,13 +97,12 @@ class bot(ch.RoomManager):
   def checkForNewBlock(self, room):
     prevBlockNum = self._lastFoundBlockNum
     prevBlockTime = self._lastFoundBlockTime
-    if prevBlockNum == 0: # check for case we can't read the number
+    if prevBlockNum == 0: # Check for case we can't read the number
       return
     self.getLastFoundBlockNum()
     if self._lastFoundBlockNum > prevBlockNum:
       BlockTimeAgo = prettyTimeDelta(int(self._lastFoundBlockTime - prevBlockTime))
-      room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck
-) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + self._lastFoundBlockValue)
+      room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + self._lastFoundBlockValue)
 
    # def onJoin(self, room, user):
      # print(user.name + " joined the chat!")
@@ -119,8 +118,8 @@ class bot(ch.RoomManager):
 
     try: 
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
-              '/window', '/test'] # update if new command
-      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] # update if new helper
+              '/window', '/test'] # Update if new command
+      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] # Update if new helper
       searchObj = re.findall(r'(\/\w+)(\.\d+)?|(\?\w+)', message.body, re.I)
       if '/all' in searchObj:
         room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
@@ -186,7 +185,7 @@ class bot(ch.RoomManager):
             lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             rShares = poolStats['pool_statistics']['roundHashes']
             if lastblock[0]['valid'] == 0:
-              previousshares = lastblock[0]['shares'] # if the last block was invalid, add those shares to the current effort
+              previousshares = lastblock[0]['shares'] # If the last block was invalid, add those shares to the current effort
               rShares = rShares + previousshares
             diff = networkStats['difficulty']
             luck = int(round(100*rShares/diff))
@@ -271,7 +270,7 @@ class bot(ch.RoomManager):
               totaleffort = (sum(lucks) + self.NblocksAvg * self.Nvalids) / (valids + self.Nvalids)
             else:
               totaleffort = sum(lucks) / valids
-            room.message(message + str(100 * totaleffort) + "%")
+            room.message(message + "{:.2f}%".format(100 * totaleffort))
 
         if cmd.lower() == "price":
             self.setFontFace("8")
@@ -318,17 +317,16 @@ class bot(ch.RoomManager):
         if cmd.lower() == "block":
             lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = lastBlock[0]['ts']
-            lastBlockReward = str(lastBlock[0]['value'])
-            lastBlockLuck = int(round(lastBlock[0]['shares']*100/lastBlock[0]['diff']))
-            xmr = (lastBlockReward[:1] + "." + lastBlockReward[1:5])
+            lastBlockReward = lastBlock[0]['value'] / 1000000000000
+            lastBlockLuck = lastBlock[0]['shares'] * 100 / lastBlock[0]['diff']
             nowTS = time.time()
             timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
             if lastBlock[0]['valid'] == 0:
               room.message("Last block was invalid :( No monies :(")
-            elif lastBlockLuck < 1:
-              room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago quite effortlessly ("+ str(lastBlockLuck) + "%)" ) 
+            elif lastBlockLuck < 2:
+              room.message("Block worth {:.4f} XMR was found {} ago quite effortlessly: {:.1f}% effort! :D".format(lastBlockReward, timeAgo, lastBlockLuck)) 
             else:
-              room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% effort.")
+              room.message("Block worth {:.4f} XMR was found {} ago, with {:.1f}% effort".format(lastBlockReward, timeAgo, lastBlockLuck))
 
         if cmd.lower() == "window":
             histRate = requests.get(apiUrl + "pool/chart/hashrate/").json()
@@ -358,10 +356,10 @@ class bot(ch.RoomManager):
       	print("Error while attempting /" + str(cmd.lower()))
       	room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
-rooms = [""] # list rooms you want the bot to connect to
-username = "" # for tests can use your own - trigger bot as anon
+rooms = [""] # List of rooms you want the bot to connect to
+username = "" # For tests you can use your own - trigger bot as anon
 password = ""
-checkForNewBlockInterval = 10 # how often to check for new block, in seconds. If not set, default value of 20 would be used
+checkForNewBlockInterval = 10 # How often to check for new block, in seconds. If not set, default value of 20 will be used
 
 try:
   bot.easy_start(rooms,username,password, checkForNewBlockInterval)
