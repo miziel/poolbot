@@ -164,7 +164,7 @@ class bot(ch.RoomManager):
             room.message("ELI5 - http://give-me-coins.com/support/faq/what-is-pplns/ | \"Trust me, I'm an engineer\" - https://bitcointalk.org/index.php?topic=39832.msg486012#msg486012")
 
         if hlp.lower() == "rtfn":
-            room.message(" MAINTENANCE NOTICE: 8.9.2017 05:00 - 07:00 CEST our ISP is performing upgrades to their core routers. They claim maximum 15 minutes of downtime in that period. Be aware!")
+            room.message("Seas 'n skies be clear, cap'n!")
 
         if hlp.lower() == "bench":
             room.message("https://docs.google.com/spreadsheets/d/18IrFEhWP89oG_BTUsQGS5IDG8LUYjCHDiRQkOuQ4a9A/edit#gid=0")
