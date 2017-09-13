@@ -170,16 +170,18 @@ class bot(ch.RoomManager):
             room.message("https://docs.google.com/spreadsheets/d/18IrFEhWP89oG_BTUsQGS5IDG8LUYjCHDiRQkOuQ4a9A/edit#gid=0")
 
     for i in range(len(command)):
-        cmd = command[i]
-        arg = argument[i]
-        cmd = cmd[1:]
-        arg = arg[1:]
-
+      cmd = command[i]
+      arg = argument[i]
+      cmd = cmd[1:]
+      arg = arg[1:]
+      
+      try:
+        
         if cmd.lower() == "help":
             room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window")
           
         if cmd.lower() == "effort":
-          try:  
+          #try:  
             poolStats = requests.get(apiUrl + "pool/stats/").json()
             networkStats = requests.get(apiUrl + "network/stats/").json()
             lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
@@ -219,15 +221,15 @@ class bot(ch.RoomManager):
               room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
             if lastblock[0]['valid'] == 0:
               room.message("The last block was invalid :(")
-          except json.decoder.JSONDecodeError:
-            print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-            room.message("JSON Bourne is trying to kill me!")
-          except:
-            print("Error while attempting /" + str(cmd.lower()))
-            room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+#          except json.decoder.JSONDecodeError:
+ #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+  #          room.message("JSON Bourne is trying to kill me!")
+   #       except:
+    #        print("Error while attempting /" + str(cmd.lower()))
+     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "pooleffort":
-          try:
+          #try:
             poolstats = requests.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             if not arg.isdigit():
@@ -278,12 +280,12 @@ class bot(ch.RoomManager):
             else:
               totaleffort = sum(lucks) / valids
             room.message(message + str(100 * totaleffort) + "%")
-          except json.decoder.JSONDecodeError:
-            print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-            room.message("JSON Bourne is trying to kill me!")
-          except:
-            print("Error while attempting /" + str(cmd.lower()))
-            room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+#          except json.decoder.JSONDecodeError:
+ #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+  #          room.message("JSON Bourne is trying to kill me!")
+   #       except:
+    #        print("Error while attempting /" + str(cmd.lower()))
+     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "price":
             self.setFontFace("8")
@@ -328,7 +330,7 @@ class bot(ch.RoomManager):
             self.setFontFace("0")
 
         if cmd.lower() == "block":
-          try:
+          #try:
             lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = lastBlock[0]['ts']
             lastBlockReward = str(lastBlock[0]['value'])
@@ -342,15 +344,15 @@ class bot(ch.RoomManager):
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago quite effortlessly ("+ str(lastBlockLuck) + "%)" ) 
             else:
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% effort.")
-          except json.decoder.JSONDecodeError:
-            print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-            room.message("JSON Bourne is trying to kill me!")
-          except:
-            print("Error while attempting /" + str(cmd.lower()))
-            room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+#          except json.decoder.JSONDecodeError:
+ #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+  #          room.message("JSON Bourne is trying to kill me!")
+   #       except:
+    #        print("Error while attempting /" + str(cmd.lower()))
+     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "window":
-          try:
+          #try:
             histRate = requests.get(apiUrl + "pool/chart/hashrate/").json()
             networkStats = requests.get(apiUrl + "network/stats/").json()
             diff = networkStats['difficulty']
@@ -361,15 +363,15 @@ class bot(ch.RoomManager):
             avgHashRate = hashRate/length
             window = prettyTimeDelta(2*diff/avgHashRate)
             room.message("Current pplns window is roughly {0}".format(window))
-          except json.decoder.JSONDecodeError:
-            print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-            room.message("JSON Bourne is trying to kill me!")
-          except:
-            print("Error while attempting /" + str(cmd.lower()))
-            room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+#          except json.decoder.JSONDecodeError:
+ #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+  #          room.message("JSON Bourne is trying to kill me!")
+   #       except:
+    #        print("Error while attempting /" + str(cmd.lower()))
+     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "normalluck":
-          try:
+          #try:
             poolstats = requests.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(totalblocks)).json()
@@ -405,13 +407,12 @@ class bot(ch.RoomManager):
             prob = (0.5 + 0.5 * erf(bias / sqrt(2)))*100
             room.message("{} {:.2f}\nProbability to be worse: {:.5f}%".format(startmessage, bias, prob))
             # room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % (bl, bias, prob))
-          except json.decoder.JSONDecodeError:
-            print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-            room.message("JSON Bourne is trying to kill me!")
-          except:
-            print("Error while attempting /" + str(cmd.lower()))
-            room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
-
+#          except json.decoder.JSONDecodeError:
+ #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+  #          room.message("JSON Bourne is trying to kill me!")
+   #       except:
+    #        print("Error while attempting /" + str(cmd.lower()))
+     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
         if cmd.lower() == "test":
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
                         "I'm sorry @" + user.name + ", I'm afraid I can't do that.",
@@ -420,10 +421,16 @@ class bot(ch.RoomManager):
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
                         "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!", "I used to be a miner like you, but then I took an ASIC to the knee")
             room.message(random.choice(justsain))
+      except json.decoder.JSONDecodeError:
+      	print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+      	room.message("JSON Bourne is trying to kill me!")
+      except:
+      	print("Error while attempting /" + str(cmd.lower()))
+      	room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
-rooms = ["testroom3"] #list rooms you want the bot to connect to
-username = "poolbot2" #for tests can use your own - triger bot as anon
-password = "bottest"
+rooms = [""] #list rooms you want the bot to connect to
+username = "" #for tests can use your own - triger bot as anon
+password = ""
 checkForNewBlockInterval = 10 # how often to check for new block, in seconds. If not set, default value of 20 would be used
 
 try:
