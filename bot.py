@@ -26,6 +26,42 @@ class bot(ch.RoomManager):
   _lastFoundBlockLuck = 0
   _lastFoundBlockValue = 0
   _lastFoundBlockTime = 0
+  apiBaseUrl = "https://supportxmr.com/api"
+  NblocksNum = 0
+  NblocksAvg = 0
+  Nvalids = 0
+  
+  # Fetch first N blocks and keep them in memory (or in a file? to avoid bloating RAM)
+  # When requesting pooleffort, only the last (blocknum - N) blocks will be requested, saving data
+  # and speeding up requests and calculations
+  # An incremental recalculation could also be implemented, but it may end up losing precision
+  # over time. Currently, the error is ~10^(-13)
+  # Note: A // 100 * 100 rounds up blocks to the last hundred
+  # Eg: 1952 // 100 * 100 == 19 * 100 == 1900 (because floor division "//" returns an int rounded down
+  try:
+    poolstats = requests.get(apiBaseUrl + "/pool/stats/").json()
+    totalblocks = poolstats['pool_statistics']['totalBlocksFound']
+    NblocksNum = totalblocks // 100 * 100 # Integer floor division
+    Nblocklist = requests.get(apiBaseUrl + "/pool/blocks/pplns?limit=" + str(totalblocks)).json()
+    Ntotalshares = 0
+    Nvalids = 0
+    Nlucks = []
+    for i in reversed(range(totalblocks)):
+      if i == (totalblocks - NblocksNum - 1):
+    	  break # Ignore the last (totalblocks % NblocksNum) blocks (note the off-by-one offset)
+      Ntotalshares += Nblocklist[i]['shares']
+      if Nblocklist[i]['valid'] == 1:
+        Ndiff = Nblocklist[i]['diff']
+        Nlucks.append(Ntotalshares/Ndiff)
+        Nvalids += 1
+        Ntotalshares = 0
+    NblocksAvg = sum(Nlucks)/Nvalids
+    print("Effort for the first " + str(NblocksNum) + " blocks has been cached")
+  except:
+    print("Failed fetching the last N blocks - defaulting to 0")
+    NblocksNum = 0
+    NblocksAvg = 0
+    Nvalids = 0
 
   def getLastFoundBlockNum(self):
     try:
@@ -202,6 +238,7 @@ class bot(ch.RoomManager):
                 message = "Overall pool effort is "
               else:
                 message = "Pool effort for the last " + str(blocknum) + " blocks is "
+            blocknum = blocknum - self.NblocksNum # Only request the last blocknum % 100 blocks
             blocklist = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=" + str(blocknum)).json()
             totalshares = 0
             valids = 0
@@ -224,9 +261,9 @@ class bot(ch.RoomManager):
                 # If the last block was invalid, temporarily pretend that it's valid and take it
                 # into accound. The displayed value will be incorrect until a valid block is found.
                 # Given the number of blocks found by the pool already, the impact will be negligible.
-            totaleffort = sum(lucks)/valids
+            totaleffort = (sum(lucks) + self.NblocksAvg * self.Nvalids) / (valids + self.Nvalids)
 
-            room.message(message + str(int(round(100*totaleffort))) + "%")
+            room.message(message + str(100 * totaleffort) + "%")
 
         if cmd.lower() == "price":
             self.setFontFace("8")
@@ -343,9 +380,9 @@ class bot(ch.RoomManager):
                         "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!", "I used to be a miner like you, but then I took an ASIC to the knee")
             room.message(random.choice(justsain))
 
-rooms = [""] #list rooms you want the bot to connect to
-username = "" #for tests can use your own - triger bot as anon
-password = ""
+rooms = ["testroom3"] #list rooms you want the bot to connect to
+username = "poolbot2" #for tests can use your own - triger bot as anon
+password = "bottest"
 checkForNewBlockInterval = 10 # how often to check for new block, in seconds. If not set, default value of 20 would be used
 
 bot.easy_start(rooms,username,password, checkForNewBlockInterval)
