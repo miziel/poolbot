@@ -6,7 +6,9 @@ import requests
 import random
 import time
 import re
-          
+
+apiUrl = "https://supportxmr.com/api/"
+
 def prettyTimeDelta(seconds):
   seconds = int(seconds)
   days, seconds = divmod(seconds, 86400)
@@ -26,7 +28,6 @@ class bot(ch.RoomManager):
   _lastFoundBlockLuck = 0
   _lastFoundBlockValue = 0
   _lastFoundBlockTime = 0
-  apiBaseUrl = "https://supportxmr.com/api"
   NblocksNum = 0
   NblocksAvg = 0
   Nvalids = 0
@@ -39,10 +40,10 @@ class bot(ch.RoomManager):
   # Note: A // 100 * 100 rounds up blocks to the last hundred
   # Eg: 1952 // 100 * 100 == 19 * 100 == 1900 (because floor division "//" returns an int rounded down
   try:
-    poolstats = requests.get(apiBaseUrl + "/pool/stats/").json()
+    poolstats = requests.get(apiUrl + "pool/stats/").json()
     totalblocks = poolstats['pool_statistics']['totalBlocksFound']
     NblocksNum = totalblocks // 100 * 100 # Integer floor division
-    Nblocklist = requests.get(apiBaseUrl + "/pool/blocks/pplns?limit=" + str(totalblocks)).json()
+    Nblocklist = requests.get(apiUrl + "pool/blocks/pplns?limit=" + str(totalblocks)).json()
     Ntotalshares = 0
     Nvalids = 0
     Nlucks = []
@@ -65,8 +66,8 @@ class bot(ch.RoomManager):
 
   def getLastFoundBlockNum(self):
     try:
-      poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-      blockstats = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
+      poolstats = requests.get(apiUrl + "pool/stats/").json()
+      blockstats = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
       self._lastFoundBlockNum = poolstats['pool_statistics']['totalBlocksFound']
       self._lastFoundBlockLuck = int(round(blockstats[0]['shares']*100/blockstats[0]['diff']))
       self._lastFoundBlockValue = str(round(blockstats[0]['value']/1000000000000, 5))
@@ -175,12 +176,12 @@ class bot(ch.RoomManager):
         arg = arg[1:]
 
         if cmd.lower() == "help":
-            room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window, normalluck")
+            room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window")
           
         if cmd.lower() == "effort":
-            poolStats = requests.get("https://supportxmr.com/api/pool/stats/").json()
-            networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
-            lastblock = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
+            poolStats = requests.get(apiUrl + "pool/stats/").json()
+            networkStats = requests.get(apiUrl + "network/stats/").json()
+            lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             rShares = poolStats['pool_statistics']['roundHashes']
             if lastblock[0]['valid'] == 0:
               previousshares = lastblock[0]['shares'] # if the last block was invalid, add those shares to the current effort
@@ -219,7 +220,7 @@ class bot(ch.RoomManager):
               room.message("The last block was invalid :(")
 
         if cmd.lower() == "pooleffort":
-            poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+            poolstats = requests.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             if not arg.isdigit():
               blocknum = totalblocks
@@ -239,7 +240,7 @@ class bot(ch.RoomManager):
               else:
                 message = "Pool effort for the last " + str(blocknum) + " blocks is "
             blocknum = blocknum - self.NblocksNum # Only request the last blocknum % 100 blocks
-            blocklist = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=" + str(blocknum)).json()
+            blocklist = requests.get(apiUrl + "pool/blocks/pplns?limit=" + str(blocknum)).json()
             totalshares = 0
             valids = 0
             lucks = []
@@ -308,7 +309,7 @@ class bot(ch.RoomManager):
             self.setFontFace("0")
 
         if cmd.lower() == "block":
-            lastBlock = requests.get("https://supportxmr.com/api/pool/blocks/pplns?limit=1").json()
+            lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = lastBlock[0]['ts']
             lastBlockReward = str(lastBlock[0]['value'])
             lastBlockLuck = int(round(lastBlock[0]['shares']*100/lastBlock[0]['diff']))
@@ -323,8 +324,8 @@ class bot(ch.RoomManager):
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% effort.")
 
         if cmd.lower() == "window":
-            histRate = requests.get("https://supportxmr.com/api/pool/chart/hashrate/").json()
-            networkStats = requests.get("https://supportxmr.com/api/network/stats/").json()
+            histRate = requests.get(apiUrl + "pool/chart/hashrate/").json()
+            networkStats = requests.get(apiUrl + "network/stats/").json()
             diff = networkStats['difficulty']
             length = 20
             hashRate = 0
@@ -335,7 +336,7 @@ class bot(ch.RoomManager):
             room.message("Current pplns window is roughly {0}".format(window))
 
         if cmd.lower() == "normalluck":
-            poolstats = requests.get("https://supportxmr.com/api/pool/stats/").json()
+            poolstats = requests.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(totalblocks)).json()
             if not arg.isdigit():
