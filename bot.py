@@ -181,7 +181,6 @@ class bot(ch.RoomManager):
             room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window")
           
         if cmd.lower() == "effort":
-          #try:  
             poolStats = requests.get(apiUrl + "pool/stats/").json()
             networkStats = requests.get(apiUrl + "network/stats/").json()
             lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
@@ -221,15 +220,8 @@ class bot(ch.RoomManager):
               room.message("We are at %s%% for the next block. That's it, we've hit a new record. Good job everyone." % str(luck))
             if lastblock[0]['valid'] == 0:
               room.message("The last block was invalid :(")
-#          except json.decoder.JSONDecodeError:
- #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-  #          room.message("JSON Bourne is trying to kill me!")
-   #       except:
-    #        print("Error while attempting /" + str(cmd.lower()))
-     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "pooleffort":
-          #try:
             poolstats = requests.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             if not arg.isdigit():
@@ -280,12 +272,6 @@ class bot(ch.RoomManager):
             else:
               totaleffort = sum(lucks) / valids
             room.message(message + str(100 * totaleffort) + "%")
-#          except json.decoder.JSONDecodeError:
- #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-  #          room.message("JSON Bourne is trying to kill me!")
-   #       except:
-    #        print("Error while attempting /" + str(cmd.lower()))
-     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "price":
             self.setFontFace("8")
@@ -330,7 +316,6 @@ class bot(ch.RoomManager):
             self.setFontFace("0")
 
         if cmd.lower() == "block":
-          #try:
             lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = lastBlock[0]['ts']
             lastBlockReward = str(lastBlock[0]['value'])
@@ -344,15 +329,8 @@ class bot(ch.RoomManager):
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago quite effortlessly ("+ str(lastBlockLuck) + "%)" ) 
             else:
               room.message("Block worth " + xmr + " XMR was found "+str(timeAgo)+" ago with " + str(lastBlockLuck) + "% effort.")
-#          except json.decoder.JSONDecodeError:
- #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-  #          room.message("JSON Bourne is trying to kill me!")
-   #       except:
-    #        print("Error while attempting /" + str(cmd.lower()))
-     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
         if cmd.lower() == "window":
-          #try:
             histRate = requests.get(apiUrl + "pool/chart/hashrate/").json()
             networkStats = requests.get(apiUrl + "network/stats/").json()
             diff = networkStats['difficulty']
@@ -363,56 +341,7 @@ class bot(ch.RoomManager):
             avgHashRate = hashRate/length
             window = prettyTimeDelta(2*diff/avgHashRate)
             room.message("Current pplns window is roughly {0}".format(window))
-#          except json.decoder.JSONDecodeError:
- #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-  #          room.message("JSON Bourne is trying to kill me!")
-   #       except:
-    #        print("Error while attempting /" + str(cmd.lower()))
-     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
-
-        if cmd.lower() == "normalluck":
-          #try:
-            poolstats = requests.get(apiUrl + "pool/stats/").json()
-            totalblocks = poolstats['pool_statistics']['totalBlocksFound']
-            blocks = requests.get('https://supportxmr.com/api/pool/blocks?limit=' + str(totalblocks)).json()
-            if not arg.isdigit():
-              blocknum = totalblocks # the message for this case is handled in the "blocknum == totalblocks" case
-              startmessage = "Compared to the average, the overall standard deviation for this pool is "
-            if arg.isdigit(): # no need to include the case blocknum < 0, because when writing "-1" the '-' will be picked up as a non-digit first, thus triggering the previous if
-              blocknum = int(arg)                
-              if blocknum == 1:
-                startmessage = "Standard deviation for the last block was "
-              elif blocknum > totalblocks:
-                blocknum = totalblocks
-                startmessage = "You have to wait till we find so many. So far we found " + str(blocknum) + " blocks with an overall standard deviation of "
-              elif blocknum == 0:
-                blocknum = random.randrange(10, totalblocks)
-                startmessage = "Yeah, nice try... Here's some random result for you.\nStandard deviation for the last " + str(blocknum) + " blocks was "
-              elif blocknum == totalblocks:
-                startmessage = "Compared to the average, the overall standard deviation for this pool is "
-              else:
-                startmessage = "Compared to the average, the standard deviation for the last " + str(blocknum) + " blocks is "
-            # approximates the binomial distribution using a normal one, close enough ;)
-            # for bl in [10, 50, None]:
-            bl = blocknum
-            # print(bl)
-            share_sum = sum(b['shares'] for b in blocks[:bl])
-            diff_sum = sum(b['diff'] for b in blocks[:bl])
-            # bl = len(blocks[:bl]) # this line is useless without the for loop
-            # print(bl)
-            avg_diff = diff_sum / bl
-            mu = share_sum / avg_diff - 0.5
-            sigma2 = share_sum / avg_diff * (1 - 1 / avg_diff)
-            bias = (bl - mu) / sqrt(sigma2)
-            prob = (0.5 + 0.5 * erf(bias / sqrt(2)))*100
-            room.message("{} {:.2f}\nProbability to be worse: {:.5f}%".format(startmessage, bias, prob))
-            # room.message("blocks: %i - std deviations better than the mode: %.2f - probability to be worse: %.5f" % (bl, bias, prob))
-#          except json.decoder.JSONDecodeError:
- #           print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-  #          room.message("JSON Bourne is trying to kill me!")
-   #       except:
-    #        print("Error while attempting /" + str(cmd.lower()))
-     #       room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+        
         if cmd.lower() == "test":
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
                         "I'm sorry @" + user.name + ", I'm afraid I can't do that.",
@@ -421,6 +350,7 @@ class bot(ch.RoomManager):
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
                         "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!", "I used to be a miner like you, but then I took an ASIC to the knee")
             room.message(random.choice(justsain))
+      
       except json.decoder.JSONDecodeError:
       	print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
       	room.message("JSON Bourne is trying to kill me!")
@@ -428,8 +358,8 @@ class bot(ch.RoomManager):
       	print("Error while attempting /" + str(cmd.lower()))
       	room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
-rooms = [""] #list rooms you want the bot to connect to
-username = "" #for tests can use your own - triger bot as anon
+rooms = [""] # list rooms you want the bot to connect to
+username = "" # for tests can use your own - trigger bot as anon
 password = ""
 checkForNewBlockInterval = 10 # how often to check for new block, in seconds. If not set, default value of 20 would be used
 
