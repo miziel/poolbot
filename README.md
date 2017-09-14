@@ -10,6 +10,10 @@ supportXMR chatango PoolBot project
 /price           - Displays XMR price in BTC and USD
 /block           - Displays info about the last block found
 /window          - Displays estimated pplns window in days/hours/minutes
-/normalluck      - Displays standard deviation of pool effort from average (thanks to Jix5)
 /test            - Displays random test messages
+
+?list			 - Displays available help info
+?bench			 - Displays benchmark spreadsheet link
+?pplns			 - Displays links for pplns explanation
+?register		 - Displays registration info
 ```
