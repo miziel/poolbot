@@ -7,6 +7,7 @@ import random
 import time
 import re
 
+
 apiUrl = "https://supportxmr.com/api/"
 
 def prettyTimeDelta(seconds):
@@ -42,6 +43,7 @@ class bot(ch.RoomManager):
   try:
     poolstats = requests.get(apiUrl + "pool/stats/").json()
     totalblocks = poolstats['pool_statistics']['totalBlocksFound']
+#    totalblocks = int(totalblocks)
     NblocksNum = totalblocks // 100 * 100 # Integer floor division
     Nblocklist = requests.get(apiUrl + "pool/blocks/pplns?limit=" + str(totalblocks)).json()
     Ntotalshares = 0
@@ -49,10 +51,10 @@ class bot(ch.RoomManager):
     Nlucks = []
     for i in reversed(range(totalblocks)):
       if i == (totalblocks - NblocksNum - 1):
-    	  break # Ignore the last (totalblocks % NblocksNum) blocks (note the off-by-one offset)
-      Ntotalshares += Nblocklist[i]['shares']
-      if Nblocklist[i]['valid'] == 1:
-        Ndiff = Nblocklist[i]['diff']
+          break # Ignore the last (totalblocks % NblocksNum) blocks (note the off-by-one offset)
+      Ntotalshares += int(Nblocklist[i]['shares'])
+      if Nblocklist[i]['valid']:
+        Ndiff = int(Nblocklist[i]['diff'])
         Nlucks.append(Ntotalshares/Ndiff)
         Nvalids += 1
         Ntotalshares = 0
@@ -69,8 +71,8 @@ class bot(ch.RoomManager):
       poolstats = requests.get(apiUrl + "pool/stats/").json()
       blockstats = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
       self._lastFoundBlockNum = poolstats['pool_statistics']['totalBlocksFound']
-      self._lastFoundBlockLuck = int(round(blockstats[0]['shares']*100/blockstats[0]['diff']))
-      self._lastFoundBlockValue = str(round(blockstats[0]['value']/1000000000000, 5))
+      self._lastFoundBlockLuck = int(round(int(blockstats[0]['shares'])*100/int(blockstats[0]['diff'])))
+      self._lastFoundBlockValue = str(round(int(blockstats[0]['value'])/1000000000000, 5))
       self._lastFoundBlockTime = poolstats['pool_statistics']['lastBlockFoundTime']
     except:
       pass          
@@ -96,13 +98,16 @@ class bot(ch.RoomManager):
 
   def checkForNewBlock(self, room):
     prevBlockNum = self._lastFoundBlockNum
+    prevBlockNum = int(prevBlockNum)
     prevBlockTime = self._lastFoundBlockTime
+    prevBlockTime = int(prevBlockTime)
     if prevBlockNum == 0: # Check for case we can't read the number
       return
     self.getLastFoundBlockNum()
+    self._lastFoundBlockNum = int(self._lastFoundBlockNum)
     if self._lastFoundBlockNum > prevBlockNum:
-      BlockTimeAgo = prettyTimeDelta(int(self._lastFoundBlockTime - prevBlockTime))
-      room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + self._lastFoundBlockValue)
+      BlockTimeAgo = prettyTimeDelta(int(int(self._lastFoundBlockTime) - prevBlockTime))
+      room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + str(self._lastFoundBlockValue))
 
    # def onJoin(self, room, user):
      # print(user.name + " joined the chat!")
@@ -118,13 +123,10 @@ class bot(ch.RoomManager):
 
     try: 
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
-              '/window', '/test'] # Update if new command
-      hlps = ['?pplns', '?register', '?RTFN', '?rtfn', '?help', '?bench', '?list'] # Update if new helper
+              '/window', '/test', '/all'] # Update if new command
+      hlps = ['?pplns', '?register', '?help', '?bench', '?daily'] # Update if new helper
       searchObj = re.findall(r'(\/\w+)(\.\d+)?|(\?\w+)', message.body, re.I)
-      if '/all' in searchObj:
-        room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
-      if '/nextblock' in searchObj:
-        room.message("s0on&trade;")
+
       searchObjCmd = []
       searchObjArg = []
       searchObjHlp = []
@@ -146,11 +148,9 @@ class bot(ch.RoomManager):
       if hlp in hlps:
         hlp = hlp[1:]
 
-        if hlp.lower() == "list":
-            room.message("?pplns - links to explanation, ?register - how to register, ?RTFN - notice about expected downtime, ?bench - our benchmarks")
-
         if hlp.lower() == "help":
-            room.message("The answer to your question was probably given already. If not, it's 42. Now, you can ask the question.")
+            room.message("Available help (use: ?command): pplns - links to explanation, register - how to register, bench - our benchmarks, daily - historical overview of daily burgers"
+                         "\nAvailable commands (use: /command): test, help, effort, pooleffort, price, block, window")
             
         if hlp.lower() == "register":
             room.message("You don't have to register to mine with us, unless you want to change your payout threshold (min 0.3 XMR). But if you really, really want to just read carefully:\n"
@@ -162,11 +162,13 @@ class bot(ch.RoomManager):
         if hlp.lower() == "pplns":
             room.message("ELI5 - http://give-me-coins.com/support/faq/what-is-pplns/ | \"Trust me, I'm an engineer\" - https://bitcointalk.org/index.php?topic=39832.msg486012#msg486012")
 
-        if hlp.lower() == "rtfn":
-            room.message("Seas 'n skies be clear, cap'n!")
-
         if hlp.lower() == "bench":
-            room.message("https://docs.google.com/spreadsheets/d/18IrFEhWP89oG_BTUsQGS5IDG8LUYjCHDiRQkOuQ4a9A/edit#gid=0")
+           room.message("https://docs.google.com/spreadsheets/d/18IrFEhWP89oG_BTUsQGS5IDG8LUYjCHDiRQkOuQ4a9A/edit#gid=0")
+
+        if hlp.lower() == "daily":
+            room.message("https://goo.gl/c1TQgc")
+			
+
 
     for i in range(len(command)):
       cmd = command[i]
@@ -175,19 +177,24 @@ class bot(ch.RoomManager):
       arg = arg[1:]
       
       try:
+        if cmd.lower() == "all":
+            room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")        
         
         if cmd.lower() == "help":
-            room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window")
+            room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window"
+                         "\nAvailable help (use: ?command): pplns - links to explanation, register - how to register, bench - our benchmarks, daily - historical overview of daily burgers")
           
         if cmd.lower() == "effort":
-            poolStats = requests.get(apiUrl + "pool/stats/").json()
+            poolstats = requests.get(apiUrl + "pool/stats/").json()
             networkStats = requests.get(apiUrl + "network/stats/").json()
             lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
-            rShares = poolStats['pool_statistics']['roundHashes']
+            rShares = poolstats['pool_statistics']['roundHashes']
+            rShares = int(rShares)
             if lastblock[0]['valid'] == 0:
               previousshares = lastblock[0]['shares'] # If the last block was invalid, add those shares to the current effort
               rShares = rShares + previousshares
             diff = networkStats['difficulty']
+            diff = int(diff)
             luck = int(round(100*rShares/diff))
             if rShares == 0:
               room.message("Until further notice I make 0% effort. I'm tired. Ask someone else.")
@@ -253,9 +260,9 @@ class bot(ch.RoomManager):
             # were found. Otherwise, invalids will mess up the values, since their shares would go into
             # the previous block instead of the following one.
             for i in reversed(range(blockrequest)):
-              totalshares += blocklist[i]['shares']
+              totalshares += int(blocklist[i]['shares'])
               if blocklist[i]['valid'] == 1:
-                diff = blocklist[i]['diff']
+                diff = int(blocklist[i]['diff'])
                 lucks.append(totalshares/diff)
                 valids += 1
                 totalshares = 0
@@ -306,19 +313,40 @@ class bot(ch.RoomManager):
                 EUR_XMR_krak = kraken['result']['XXMRZEUR']['c'][0]
             except (KeyError, ValueError):
                 EUR_XMR_krak = ' n/a '
+            try:
+                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
+                USD_XMR_bitfin = bitfinex['last_price']
+            except (KeyError, ValueError):
+                USD_XMR_bitfin = ' n/a '
+            try:
+                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
+                BTC_XMR_bitfin = bitfinex['last_price']
+            except (KeyError, ValueError):
+                BTC_XMR_bitfin = ' n/a '
+            try:
+                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
+                USD_XMR_bitfin = bitfinex['last_price']
+            except (KeyError, ValueError):
+                USD_XMR_bitfin = ' n/a '
+            try:
+                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
+                BTC_XMR_bitfin = bitfinex['last_price']
+            except (KeyError, ValueError):
+                BTC_XMR_bitfin = ' n/a '
             room.message(("\n|| {10:<13} | {11:<5} {12:^5.5} | {13:<4} {14:<7.7} | {15:<4} {16:<^5.5} ||"
-                          "\n|| {0:<13} | {1:<5} {2:^5.5} | {3:<4} {4:^7.7} ||"
-                          "\n|| {5:<13} | {6:<5} {7:^5.5} | {8:<4} {9:<7.7} ||"
-                          ).format("Poloniex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "USDT&nbsp;", USDT_XMR_polo, "BTC&nbsp;", BTC_XMR_polo,
-                                   "Shapeshift&nbsp;&nbsp;&nbsp;", "USDT&nbsp;", USDT_XMR_shape, "BTC&nbsp;", BTC_XMR_shape,
-                                   "Kraken&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "USD &nbsp;", USD_XMR_krak, "BTC&nbsp;", BTC_XMR_krak, "EUR&nbsp;", EUR_XMR_krak))
+                       "\n|| {0:<13} | {1:<5} {2:^5.5} | {3:<4} {4:^7.7} ||"
+                       "\n|| {5:<13} | {6:<5} {7:^5.5} | {8:<4} {9:<7.7} ||"
+                       "\n|| {17:<13} | {18:<5} {19:^5.5} | {20:<4} {21:<7.7} ||").format("Poloniex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "USDT&nbsp;", USDT_XMR_polo, "BTC&nbsp;", BTC_XMR_polo,
+                                                                                     "Shapeshift&nbsp;&nbsp;&nbsp;", "USDT&nbsp;", USDT_XMR_shape, "BTC&nbsp;", BTC_XMR_shape,
+                                                                                     "Kraken&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "USD &nbsp;", USD_XMR_krak, "BTC&nbsp;", BTC_XMR_krak, "EUR&nbsp;", EUR_XMR_krak,
+                                                                                     "Bitfinex&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "USD &nbsp;", USD_XMR_bitfin, "BTC&nbsp;", BTC_XMR_bitfin))
             self.setFontFace("0")
 
         if cmd.lower() == "block":
             lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
-            lastBlockFoundTime = lastBlock[0]['ts']
-            lastBlockReward = lastBlock[0]['value'] / 1000000000000
-            lastBlockLuck = lastBlock[0]['shares'] * 100 / lastBlock[0]['diff']
+            lastBlockFoundTime = int(lastBlock[0]['ts'])
+            lastBlockReward = int(lastBlock[0]['value']) / 1000000000000
+            lastBlockLuck = int(lastBlock[0]['shares']) * 100 / int(lastBlock[0]['diff'])
             nowTS = time.time()
             timeAgo = prettyTimeDelta(int(nowTS - lastBlockFoundTime/1000))
             if lastBlock[0]['valid'] == 0:
@@ -350,11 +378,11 @@ class bot(ch.RoomManager):
             room.message(random.choice(justsain))
       
       except json.decoder.JSONDecodeError:
-      	print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
-      	room.message("JSON Bourne is trying to kill me!")
+        print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
+        room.message("JSON Bourne is trying to kill me!")
       except:
-      	print("Error while attempting /" + str(cmd.lower()))
-      	room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
+        print("Error while attempting /" + str(cmd.lower()))
+        room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
 rooms = [""] # List of rooms you want the bot to connect to
 username = "" # For tests you can use your own - trigger bot as anon
