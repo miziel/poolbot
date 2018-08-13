@@ -85,7 +85,7 @@ class bot(ch.RoomManager):
         blockstats = session.get(apiUrl + "pool/blocks/pplns?limit=2").json()
         if int(poolstats['pool_statistics']['lastBlockFoundTime']) != int(int(blockstats[0]['ts']) / 1000):
           print('Mismatched block between API calls. Sleeping...')
-          time.sleep(3)
+          time.sleep(10)
         else:
           self._lastFoundBlockNum = int(poolstats['pool_statistics']['totalBlocksFound'])
           self._lastFoundBlockLuck = int(round(int(blockstats[0]['shares']) * 100 / int(blockstats[0]['diff'])))
