@@ -1,14 +1,20 @@
-from math import erf, sqrt
 import ch
-import urllib
-import json
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+import json
 import random
 import time
 import re
 
 
 apiUrl = "https://supportxmr.com/api/"
+session = requests.Session()
+session.keep_alive = True
+session.headers.update({'Cache-Control': 'no-cache'})
+retries = Retry(total=5, raise_on_status=True, backoff_factor=0.2)
+session.mount(apiUrl, HTTPAdapter(max_retries=retries))
+print(session.headers)
 
 def prettyTimeDelta(seconds):
   seconds = int(seconds)
@@ -41,11 +47,11 @@ class bot(ch.RoomManager):
   # Note: A // 100 * 100 rounds up blocks to the last hundred
   # Eg: 1952 // 100 * 100 == 19 * 100 == 1900 (because floor division "//" returns an int rounded down
   try:
-    poolstats = requests.get(apiUrl + "pool/stats/").json()
+    poolstats = session.get(apiUrl + "pool/stats/").json()
     totalblocks = poolstats['pool_statistics']['totalBlocksFound']
 #    totalblocks = int(totalblocks)
     NblocksNum = totalblocks // 100 * 100 # Integer floor division
-    Nblocklist = requests.get(apiUrl + "pool/blocks/pplns?limit=" + str(totalblocks)).json()
+    Nblocklist = session.get(apiUrl + "pool/blocks/pplns?limit=" + str(totalblocks)).json()
     Ntotalshares = 0
     Nvalids = 0
     Nlucks = []
@@ -67,15 +73,31 @@ class bot(ch.RoomManager):
     Nvalids = 0
 
   def getLastFoundBlockNum(self):
+    self._lastFoundBlockNum = 0
     try:
-      poolstats = requests.get(apiUrl + "pool/stats/").json()
-      blockstats = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
-      self._lastFoundBlockNum = poolstats['pool_statistics']['totalBlocksFound']
-      self._lastFoundBlockLuck = int(round(int(blockstats[0]['shares'])*100/int(blockstats[0]['diff'])))
-      self._lastFoundBlockValue = str(round(int(blockstats[0]['value'])/1000000000000, 5))
-      self._lastFoundBlockTime = poolstats['pool_statistics']['lastBlockFoundTime']
-    except:
-      pass          
+      # Sometimes we get a cached or otherwise out of date response
+      # that does not correspond to the current block.
+      # We can try waiting around for a few seconds, otherwise we just skip announcing that block.
+      # Alternatively, we could forcefully incrementing _lastFoundBlockNum and do without
+      # the other API call. That would further prevent any skipped blocks.
+      for x in range(0, 3):
+        poolstats = session.get(apiUrl + "pool/stats/").json()
+        blockstats = session.get(apiUrl + "pool/blocks/pplns?limit=2").json()
+        if int(poolstats['pool_statistics']['lastBlockFoundTime']) != int(int(blockstats[0]['ts']) / 1000):
+          print('Mismatched block between API calls. Sleeping...')
+          time.sleep(10)
+        else:
+          self._lastFoundBlockNum = int(poolstats['pool_statistics']['totalBlocksFound'])
+          self._lastFoundBlockLuck = int(round(int(blockstats[0]['shares']) * 100 / int(blockstats[0]['diff'])))
+          self._lastFoundBlockValue = str(round(int(blockstats[0]['value']) / 1000000000000, 5))
+          self._lastFoundBlockHeight = int(blockstats[0]['height'])
+          timeDelta = int(blockstats[0]['ts']) - int(blockstats[1]['ts'])
+          self._lastFoundBlockTime = timeDelta / 1000
+          break
+      if self._lastFoundBlockNum == 0:
+        print("API still hasn't updated. Skipping announcement for this block.")
+    except Exception as ex:
+      print('Failed to retrieve stats for last block.\n{0}'.format(ex))
 
   def onInit(self):
     self.setNameColor("CC6600")
@@ -97,16 +119,14 @@ class bot(ch.RoomManager):
     room.message("Warning: self-destruction cancelled. Systems online")
 
   def checkForNewBlock(self, room):
+    prevBlockHeight = int(self._lastFoundBlockHeight)
     prevBlockNum = self._lastFoundBlockNum
     prevBlockNum = int(prevBlockNum)
-    prevBlockTime = self._lastFoundBlockTime
-    prevBlockTime = int(prevBlockTime)
     if prevBlockNum == 0: # Check for case we can't read the number
       return
     self.getLastFoundBlockNum()
-    self._lastFoundBlockNum = int(self._lastFoundBlockNum)
-    if self._lastFoundBlockNum > prevBlockNum:
-      BlockTimeAgo = prettyTimeDelta(int(int(self._lastFoundBlockTime) - prevBlockTime))
+    if self._lastFoundBlockHeight > prevBlockHeight:
+      BlockTimeAgo = prettyTimeDelta(self._lastFoundBlockTime)
       room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(self._lastFoundBlockLuck) + "% | &#x23F0; " + str(BlockTimeAgo)+ " | &#x1DAC; " + str(self._lastFoundBlockValue))
 
    # def onJoin(self, room, user):
@@ -121,7 +141,7 @@ class bot(ch.RoomManager):
 
     if self.user == user: return
 
-    try: 
+    try:
       cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
               '/window', '/test', '/all'] # Update if new command
       hlps = ['?pplns', '?register', '?help', '?bench', '?daily'] # Update if new helper
@@ -185,9 +205,9 @@ class bot(ch.RoomManager):
                          "\nAvailable help (use: ?command): pplns - links to explanation, register - how to register, bench - our benchmarks, daily - historical overview of daily burgers")
           
         if cmd.lower() == "effort":
-            poolstats = requests.get(apiUrl + "pool/stats/").json()
-            networkStats = requests.get(apiUrl + "network/stats/").json()
-            lastblock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
+            poolstats = session.get(apiUrl + "pool/stats/").json()
+            networkStats = session.get(apiUrl + "network/stats/").json()
+            lastblock = session.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             rShares = poolstats['pool_statistics']['roundHashes']
             rShares = int(rShares)
             if lastblock[0]['valid'] == 0:
@@ -228,7 +248,7 @@ class bot(ch.RoomManager):
               room.message("The last block was invalid :(")
 
         if cmd.lower() == "pooleffort":
-            poolstats = requests.get(apiUrl + "pool/stats/").json()
+            poolstats = session.get(apiUrl + "pool/stats/").json()
             totalblocks = poolstats['pool_statistics']['totalBlocksFound']
             if not arg.isdigit():
               blocknum = totalblocks
@@ -251,7 +271,7 @@ class bot(ch.RoomManager):
               blockrequest = blocknum - self.NblocksNum # Only request the last blocknum % 100 blocks
             else:
               blockrequest = blocknum
-            blocklist = requests.get(apiUrl + "pool/blocks/pplns?limit=" + str(blockrequest)).json()
+            blocklist = session.get(apiUrl + "pool/blocks/pplns?limit=" + str(blockrequest)).json()
             totalshares = 0
             valids = 0
             lucks = []
@@ -282,54 +302,54 @@ class bot(ch.RoomManager):
         if cmd.lower() == "price":
             self.setFontFace("8")
             try:
-                poloniex = requests.get("https://poloniex.com/public?command=returnTicker").json()
+                poloniex = session.get("https://poloniex.com/public?command=returnTicker").json()
                 BTC_XMR_polo = poloniex['BTC_XMR']['last']
                 USDT_XMR_polo = poloniex['USDT_XMR']['last']
             except (KeyError, ValueError):
                 BTC_XMR_polo = ' n/a '
                 USDT_XMR_polo = ' n/a '
             try:
-                shapeshift = requests.get("https://shapeshift.io/rate/xmr_btc").json()
-                BTC_XMR_shape = shapeshift['rate']   
+                shapeshift = session.get("https://shapeshift.io/rate/xmr_btc").json()
+                BTC_XMR_shape = shapeshift['rate']
             except (KeyError, ValueError):
                 BTC_XMR_shape = ' n/a '
             try:
-                shapeshift = requests.get("https://shapeshift.io/rate/xmr_usdt").json()
+                shapeshift = session.get("https://shapeshift.io/rate/xmr_usdt").json()
                 USDT_XMR_shape = shapeshift['rate']
             except (KeyError, ValueError):
                 USDT_XMR_shape = ' n/a '
             try:
-                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRXBT").json()
+                kraken = session.get("https://api.kraken.com/0/public/Ticker?pair=XMRXBT").json()
                 BTC_XMR_krak = kraken['result']['XXMRXXBT']['c'][0]
-            except (KeyError, ValueError): 
+            except (KeyError, ValueError):
                 BTC_XMR_krak = ' n/a '
             try:
-                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMRUSD").json()
+                kraken = session.get("https://api.kraken.com/0/public/Ticker?pair=XMRUSD").json()
                 USD_XMR_krak = kraken['result']['XXMRZUSD']['c'][0]
             except (KeyError, ValueError):
                 USD_XMR_krak = ' n/a '
             try:
-                kraken = requests.get("https://api.kraken.com/0/public/Ticker?pair=XMREUR").json()
+                kraken = session.get("https://api.kraken.com/0/public/Ticker?pair=XMREUR").json()
                 EUR_XMR_krak = kraken['result']['XXMRZEUR']['c'][0]
             except (KeyError, ValueError):
                 EUR_XMR_krak = ' n/a '
             try:
-                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
+                bitfinex = session.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
                 USD_XMR_bitfin = bitfinex['last_price']
             except (KeyError, ValueError):
                 USD_XMR_bitfin = ' n/a '
             try:
-                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
+                bitfinex = session.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
                 BTC_XMR_bitfin = bitfinex['last_price']
             except (KeyError, ValueError):
                 BTC_XMR_bitfin = ' n/a '
             try:
-                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
+                bitfinex = session.get("https://api.bitfinex.com/v1/pubticker/xmrusd").json()
                 USD_XMR_bitfin = bitfinex['last_price']
             except (KeyError, ValueError):
                 USD_XMR_bitfin = ' n/a '
             try:
-                bitfinex = requests.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
+                bitfinex = session.get("https://api.bitfinex.com/v1/pubticker/xmrbtc").json()
                 BTC_XMR_bitfin = bitfinex['last_price']
             except (KeyError, ValueError):
                 BTC_XMR_bitfin = ' n/a '
@@ -343,7 +363,7 @@ class bot(ch.RoomManager):
             self.setFontFace("0")
 
         if cmd.lower() == "block":
-            lastBlock = requests.get(apiUrl + "pool/blocks/pplns?limit=1").json()
+            lastBlock = session.get(apiUrl + "pool/blocks/pplns?limit=1").json()
             lastBlockFoundTime = int(lastBlock[0]['ts'])
             lastBlockReward = int(lastBlock[0]['value']) / 1000000000000
             lastBlockLuck = int(lastBlock[0]['shares']) * 100 / int(lastBlock[0]['diff'])
@@ -357,8 +377,8 @@ class bot(ch.RoomManager):
               room.message("Block worth {:.4f} XMR was found {} ago, with {:.1f}% effort".format(lastBlockReward, timeAgo, lastBlockLuck))
 
         if cmd.lower() == "window":
-            histRate = requests.get(apiUrl + "pool/chart/hashrate/").json()
-            networkStats = requests.get(apiUrl + "network/stats/").json()
+            histRate = session.get(apiUrl + "pool/chart/hashrate/").json()
+            networkStats = session.get(apiUrl + "network/stats/").json()
             diff = networkStats['difficulty']
             length = 20
             hashRate = 0
