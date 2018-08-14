@@ -12,7 +12,7 @@ apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
 session.keep_alive = True
 session.headers.update({'Cache-Control': 'no-cache'})
-retries = Retry(total=5, raise_on_status=True, backoff_factor=0.2)
+retries = Retry(total=5, raise_on_status=False, backoff_factor=0.2)
 session.mount(apiUrl, HTTPAdapter(max_retries=retries))
 print(session.headers)
 
@@ -80,12 +80,12 @@ class bot(ch.RoomManager):
       # We can try waiting around for a few seconds, otherwise we just skip announcing that block.
       # Alternatively, we could forcefully incrementing _lastFoundBlockNum and do without
       # the other API call. That would further prevent any skipped blocks.
-      for x in range(0, 3):
+      for x in range(0, 10):
         poolstats = session.get(apiUrl + "pool/stats/").json()
         blockstats = session.get(apiUrl + "pool/blocks/pplns?limit=2").json()
         if int(poolstats['pool_statistics']['lastBlockFoundTime']) != int(int(blockstats[0]['ts']) / 1000):
           print('Mismatched block between API calls. Sleeping...')
-          time.sleep(10)
+          time.sleep(3)
         else:
           self._lastFoundBlockNum = int(poolstats['pool_statistics']['totalBlocksFound'])
           self._lastFoundBlockLuck = int(round(int(blockstats[0]['shares']) * 100 / int(blockstats[0]['diff'])))
