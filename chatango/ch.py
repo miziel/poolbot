@@ -42,7 +42,7 @@ import random
 import re
 import sys
 import select
-import _ws
+from chatango import _ws
 import html
 
 ################################################################
@@ -60,7 +60,6 @@ if sys.version_info[0] < 3:
   input = raw_input
   bytes = str
   str = unicode
-  import codecs
   import Queue as queue
 else:
   import queue
@@ -1543,7 +1542,7 @@ class Room:
 
     payload = ":".join(args) + terminator
 
-    self._write( _ws.encode_frame(mask = True, payload = payload) )
+    self._write(_ws.encode_frame(mask = True, payload = payload))
 
   def getLevel(self, user):
     """get the level of user in a room"""

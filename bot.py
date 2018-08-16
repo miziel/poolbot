@@ -1,4 +1,4 @@
-import ch
+from chatango import ch
 import requests
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -7,7 +7,7 @@ import random
 import time
 import re
 
-from config import JsonConfig
+from jsonconfig import JsonConfig
 
 apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
