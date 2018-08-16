@@ -75,6 +75,20 @@ class bot(ch.RoomManager):
         NblocksAvg = 0
         Nvalids = 0
 
+    def __init__(self, name, password, pm):
+        super(bot, self).__init__(name, password, pm)
+        self._lastTick = time.time()
+        if not config.checkForNewBlockInterval:
+            config.checkForNewBlockInterval = 20
+
+    def _tick(self):
+        super(bot, self)._tick()
+        if time.time() - self._lastTick > config.checkForNewBlockInterval:
+            self.getLastFoundBlockNum()
+
+    def onConnect(self, room):
+        print("Connected to room {0}.".format(room.name))
+
     def getLastFoundBlockNum(self):
         self._lastFoundBlockNum = 0
         try:
@@ -87,7 +101,7 @@ class bot(ch.RoomManager):
                 poolstats = session.get(apiUrl + "pool/stats/").json()
                 blockstats = session.get(apiUrl + "pool/blocks/pplns?limit=2").json()
                 if int(poolstats['pool_statistics']['lastBlockFoundTime']) != int(int(blockstats[0]['ts']) / 1000):
-                    print('Mismatched block between API calls. Sleeping...')
+                    #print('Mismatched block between API calls. Sleeping...')
                     time.sleep(3)
                 else:
                     self._lastFoundBlockNum = int(poolstats['pool_statistics']['totalBlocksFound'])
@@ -99,9 +113,9 @@ class bot(ch.RoomManager):
                     self._lastFoundBlockTime = timeDelta / 1000
                     break
             if self._lastFoundBlockNum == 0:
-                print("API still hasn't updated. Skipping announcement for this block.")
+                print("API still hasn't updated. Skipping announcement for this block. {0}")
         except Exception as ex:
-            print('Failed to retrieve stats for last block.\n{0}'.format(ex))
+            print('Failed to retrieve stats for last block.\n{0}'.format(ex.__traceback__))
 
     def onInit(self):
         self.setNameColor("CC6600")
@@ -126,9 +140,9 @@ class bot(ch.RoomManager):
         prevBlockHeight = int(self._lastFoundBlockHeight)
         prevBlockNum = self._lastFoundBlockNum
         prevBlockNum = int(prevBlockNum)
+        self.getLastFoundBlockNum()
         if prevBlockNum == 0:  # Check for case we can't read the number
             return
-        self.getLastFoundBlockNum()
         if self._lastFoundBlockHeight > prevBlockHeight:
             BlockTimeAgo = prettyTimeDelta(self._lastFoundBlockTime)
             room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(
@@ -436,6 +450,6 @@ class bot(ch.RoomManager):
 
 
 try:
-    bot.easy_start(config.rooms, config.username, config.password, config.checkForNewBlockInterval)
+    bot.easy_start(config.rooms, config.username, config.password)
 except KeyboardInterrupt:
     print("\nStopped")
