@@ -85,6 +85,7 @@ class bot(ch.RoomManager):
         super(bot, self)._tick()
         if time.time() - self._lastTick > config.checkForNewBlockInterval:
             self.getLastFoundBlockNum()
+            self._lastTick = time.time()
 
     def onConnect(self, room):
         print("Connected to room {0}.".format(room.name))
