@@ -89,9 +89,6 @@ class bot(ch.RoomManager):
             self.checkForNewBlock()
             self._lastTick = time.time()
 
-    def onConnect(self, room):
-        print("Connected to room {0}.".format(room.name))
-
     def message(self, message):
         for room in self.rooms:
             room.message(message)
@@ -132,7 +129,7 @@ class bot(ch.RoomManager):
         self.getLastFoundBlockNum()
 
     def onConnect(self, room):
-        print("Connected")
+        print("Connected to room {0}.".format(room.name))
 
     def onReconnect(self, room):
         print("Reconnected")
