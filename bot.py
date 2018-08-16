@@ -7,7 +7,7 @@ import random
 import time
 import re
 
-import config
+from config import JsonConfig
 
 apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
@@ -34,6 +34,7 @@ def prettyTimeDelta(seconds):
 
 
 class bot(ch.RoomManager):
+    config = JsonConfig.load("config.json")
     _lastFoundBlockNum = 0
     _lastFoundBlockLuck = 0
     _lastFoundBlockValue = 0
@@ -78,12 +79,13 @@ class bot(ch.RoomManager):
     def __init__(self, name, password, pm):
         super(bot, self).__init__(name, password, pm)
         self._lastTick = time.time()
-        if not config.checkForNewBlockInterval:
-            config.checkForNewBlockInterval = 20
+        self.config = bot.config
+        if not self.config['poll_rate']:
+            self.config['poll_rate'] = 20
 
     def _tick(self):
         super(bot, self)._tick()
-        if time.time() - self._lastTick > config.checkForNewBlockInterval:
+        if time.time() - self._lastTick > self.config['poll_rate']:
             self.checkForNewBlock()
             self._lastTick = time.time()
 
@@ -456,6 +458,6 @@ class bot(ch.RoomManager):
 
 
 try:
-    bot.easy_start(config.rooms, config.username, config.password)
+    bot.easy_start(bot.config['rooms'], bot.config['username'], bot.config['password'])
 except KeyboardInterrupt:
     print("\nStopped")
