@@ -7,6 +7,8 @@ import random
 import time
 import re
 
+import config
+
 
 apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
@@ -38,7 +40,7 @@ class bot(ch.RoomManager):
   NblocksNum = 0
   NblocksAvg = 0
   Nvalids = 0
-  
+
   # Fetch first N blocks and keep them in memory (or in a file? to avoid bloating RAM)
   # When requesting pooleffort, only the last (blocknum - N) blocks will be requested, saving data
   # and speeding up requests and calculations
@@ -104,14 +106,14 @@ class bot(ch.RoomManager):
     self.setFontColor("000000")
     self.setFontFace("0")
     self.setFontSize(11)
-    self.getLastFoundBlockNum()          
+    self.getLastFoundBlockNum()
 
   def onConnect(self, room):
     print("Connected")
-     
+
   def onReconnect(self, room):
     print("Reconnected")
-     
+
   def onDisconnect(self, room):
     print("Disconnected")
     for room in self.rooms:
@@ -171,7 +173,7 @@ class bot(ch.RoomManager):
         if hlp.lower() == "help":
             room.message("Available help (use: ?command): pplns - links to explanation, register - how to register, bench - our benchmarks, daily - historical overview of daily burgers"
                          "\nAvailable commands (use: /command): test, help, effort, pooleffort, price, block, window")
-            
+
         if hlp.lower() == "register":
             room.message("You don't have to register to mine with us, unless you want to change your payout threshold (min 0.3 XMR). But if you really, really want to just read carefully:\n"
                          "1. Put \"workername:your@email.com\" as password in your miner (\"workername\" is just a name you give to each of your devices, eg: \"laptop-1\").\n"
@@ -187,7 +189,7 @@ class bot(ch.RoomManager):
 
         if hlp.lower() == "daily":
             room.message("https://goo.gl/c1TQgc")
-			
+
 
 
     for i in range(len(command)):
@@ -195,15 +197,15 @@ class bot(ch.RoomManager):
       arg = argument[i]
       cmd = cmd[1:]
       arg = arg[1:]
-      
+
       try:
         if cmd.lower() == "all":
-            room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")        
-        
+            room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
+
         if cmd.lower() == "help":
             room.message("Available commands (use: /command): test, help, effort, pooleffort, price, block, window"
                          "\nAvailable help (use: ?command): pplns - links to explanation, register - how to register, bench - our benchmarks, daily - historical overview of daily burgers")
-          
+
         if cmd.lower() == "effort":
             poolstats = session.get(apiUrl + "pool/stats/").json()
             networkStats = session.get(apiUrl + "network/stats/").json()
@@ -254,7 +256,7 @@ class bot(ch.RoomManager):
               blocknum = totalblocks
               message = "Overall pool effort is "
             if arg.isdigit(): # no need to include the case blocknum < 0, because when writing "-1" the '-' will be picked up as a non-digit first, thus triggering the previous if
-              blocknum = int(arg)                
+              blocknum = int(arg)
               if blocknum == 1:
                 message = "Just use /block... Effort for the last one was "
               elif blocknum > totalblocks:
@@ -372,7 +374,7 @@ class bot(ch.RoomManager):
             if lastBlock[0]['valid'] == 0:
               room.message("Last block was invalid :( No monies :(")
             elif lastBlockLuck < 2:
-              room.message("Block worth {:.4f} XMR was found {} ago quite effortlessly: {:.1f}% effort! :D".format(lastBlockReward, timeAgo, lastBlockLuck)) 
+              room.message("Block worth {:.4f} XMR was found {} ago quite effortlessly: {:.1f}% effort! :D".format(lastBlockReward, timeAgo, lastBlockLuck))
             else:
               room.message("Block worth {:.4f} XMR was found {} ago, with {:.1f}% effort".format(lastBlockReward, timeAgo, lastBlockLuck))
 
@@ -387,7 +389,7 @@ class bot(ch.RoomManager):
             avgHashRate = hashRate/length
             window = prettyTimeDelta(2*diff/avgHashRate)
             room.message("Current pplns window is roughly {0}".format(window))
-        
+
         if cmd.lower() == "test":
             justsain = ("Attention. Emergency. All personnel must evacuate immediately. You now have 15 minutes to reach minimum safe distance.",
                         "I'm sorry @" + user.name + ", I'm afraid I can't do that.",
@@ -396,7 +398,7 @@ class bot(ch.RoomManager):
                         "Apologies, @" + user.name + ". I seem to have reached an odd functional impasse. I am, uh ... stuck.",
                         "Don't test. Ask. Or ask not.", "This is my pool. There are many like it, but this one is mine!", "I used to be a miner like you, but then I took an ASIC to the knee")
             room.message(random.choice(justsain))
-      
+
       except json.decoder.JSONDecodeError:
         print("There was a json.decoder.JSONDecodeError while attempting /" + str(cmd.lower()) + " (probably due to /pool/stats/)")
         room.message("JSON Bourne is trying to kill me!")
@@ -404,12 +406,7 @@ class bot(ch.RoomManager):
         print("Error while attempting /" + str(cmd.lower()))
         room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
-rooms = [""] # List of rooms you want the bot to connect to
-username = "" # For tests you can use your own - trigger bot as anon
-password = ""
-checkForNewBlockInterval = 10 # How often to check for new block, in seconds. If not set, default value of 20 will be used
-
 try:
-  bot.easy_start(rooms,username,password, checkForNewBlockInterval)
+  bot.easy_start(config.rooms, config.username, config.password, config.checkForNewBlockInterval)
 except KeyboardInterrupt:
   print("\nStopped")
