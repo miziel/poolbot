@@ -84,11 +84,15 @@ class bot(ch.RoomManager):
     def _tick(self):
         super(bot, self)._tick()
         if time.time() - self._lastTick > config.checkForNewBlockInterval:
-            self.getLastFoundBlockNum()
+            self.checkForNewBlock()
             self._lastTick = time.time()
 
     def onConnect(self, room):
         print("Connected to room {0}.".format(room.name))
+
+    def message(self, message):
+        for room in self.rooms:
+            room.message(message)
 
     def getLastFoundBlockNum(self):
         self._lastFoundBlockNum = 0
@@ -137,7 +141,7 @@ class bot(ch.RoomManager):
             room.reconnect()
         room.message("Warning: self-destruction cancelled. Systems online")
 
-    def checkForNewBlock(self, room):
+    def checkForNewBlock(self):
         prevBlockHeight = int(self._lastFoundBlockHeight)
         prevBlockNum = self._lastFoundBlockNum
         prevBlockNum = int(prevBlockNum)
@@ -146,7 +150,7 @@ class bot(ch.RoomManager):
             return
         if self._lastFoundBlockHeight > prevBlockHeight:
             BlockTimeAgo = prettyTimeDelta(self._lastFoundBlockTime)
-            room.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(
+            self.message("*burger* #" + str(self._lastFoundBlockNum) + " | &#x26cf; " + str(
                 self._lastFoundBlockLuck) + "% | &#x23F0; " + str(BlockTimeAgo) + " | &#x1DAC; " + str(
                 self._lastFoundBlockValue))
 
@@ -157,6 +161,7 @@ class bot(ch.RoomManager):
     # def onLeave(self, room, user):
     # print(user.name + " have left the chat")
     # room.message(user.name+" has left the building.)
+
 
     def onMessage(self, room, user, message):
 
