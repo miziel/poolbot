@@ -458,4 +458,4 @@ if __name__ == "__main__":
         config = JsonConfig.load("config.json")
         b = Bot(config)
     except KeyboardInterrupt:
-    print("\nStopped")
+        print("\nStopped")
