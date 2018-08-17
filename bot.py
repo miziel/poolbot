@@ -6,6 +6,7 @@ import json
 import random
 import time
 import re
+import traceback
 
 from util import JsonConfig
 
@@ -119,7 +120,7 @@ class bot(ch.RoomManager):
             if self._lastFoundBlockNum == 0:
                 print("API still hasn't updated. Skipping announcement for this block. {0}")
         except Exception as ex:
-            print('Failed to retrieve stats for last block.\n{0}'.format(ex.__traceback__))
+            print('Failed to retrieve stats for last block.\n{0}'.format(traceback.print_tb(ex.__traceback__)))
 
     def onInit(self):
         self.setNameColor("CC6600")
