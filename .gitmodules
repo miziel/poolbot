@@ -1,0 +1,3 @@
+[submodule "PyCryptoRigMan"]
+	path = PyCryptoRigMan
+	url = git@github.com:Justin42/PyCryptoRigMan.git
