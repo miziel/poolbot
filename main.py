@@ -5,5 +5,6 @@ if __name__ == "__main__":
     try:
         config = JsonConfig.load("config.json")
         b = Bot(config)
+        b.main()
     except KeyboardInterrupt:
         print("\nStopped")

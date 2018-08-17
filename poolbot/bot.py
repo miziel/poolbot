@@ -36,7 +36,6 @@ def prettyTimeDelta(seconds):
 
 class Bot(ch.RoomManager):
     def __init__(self, config: dict):
-        super(Bot, self).__init__(config['username'], config['password'], False)
         self.config = config
 
         self._lastFoundBlockNum = 0
@@ -82,6 +81,18 @@ class Bot(ch.RoomManager):
         self._lastTick = time.time()
         if not self.config['poll_rate']:
             self.config['poll_rate'] = 20
+
+        # Check that necessary config values have been set
+        if not config['rooms'] or len(config['rooms']) == 0 or config['rooms'][0] == '':
+            config['rooms'] = str(input("Rooms, separated by semicolon: ")).split(';')
+        if not config['username'] or config['username'] == '':
+            config['username'] = str(input("User name: "))
+        if not config['password'] or config['password'] == '':
+            config['password'] = str(input("Pasword: "))
+
+        super(Bot, self).__init__(config['username'], config['password'], True)
+        for room in self.config['rooms']:
+            self.joinRoom(room)
 
     def _tick(self):
         super(Bot, self)._tick()
