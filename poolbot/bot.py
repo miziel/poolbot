@@ -129,6 +129,8 @@ class Bot(ch.RoomManager):
                     break
             if self._lastFoundBlockNum == 0:
                 print("API still hasn't updated. Skipping announcement for this block. {0}")
+        except ConnectionError as ex:
+            print("Connection error. Unable to retrieve block data.")
         except Exception as ex:
             print('Failed to retrieve stats for last block.\n{0}'.format(traceback.print_tb(ex.__traceback__)))
 
