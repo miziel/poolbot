@@ -72,7 +72,7 @@ class Bot(ch.RoomManager):
                     self.Nlucks.append(self.Ntotalshares / self.Ndiff)
                     self.Nvalids += 1
                     Ntotalshares = 0
-            NblocksAvg = sum(Nlucks) / self.Nvalids
+            self.NblocksAvg = sum(self.Nlucks) / self.Nvalids
             print("Effort for the first " + str(self.NblocksNum) + " blocks has been cached")
         except:
             print("Failed fetching the last N blocks - defaulting to 0")
@@ -449,13 +449,6 @@ class Bot(ch.RoomManager):
                 print("There was a json.decoder.JSONDecodeError while attempting /" + str(
                     cmd.lower()) + " (probably due to /pool/stats/)")
                 room.message("JSON Bourne is trying to kill me!")
-            except:
+            except Exception as ex:
                 print("Error while attempting /" + str(cmd.lower()))
                 room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
-
-if __name__ == "__main__":
-    try:
-        config = JsonConfig.load("config.json")
-        b = Bot(config)
-    except KeyboardInterrupt:
-        print("\nStopped")
