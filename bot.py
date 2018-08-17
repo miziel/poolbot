@@ -34,58 +34,57 @@ def prettyTimeDelta(seconds):
         return '%ds' % (seconds,)
 
 
-class bot(ch.RoomManager):
-    config = JsonConfig.load("config.json")
-    _lastFoundBlockNum = 0
-    _lastFoundBlockLuck = 0
-    _lastFoundBlockValue = 0
-    _lastFoundBlockTime = 0
-    NblocksNum = 0
-    NblocksAvg = 0
-    Nvalids = 0
+class Bot(ch.RoomManager):
+    def __init__(self, config: dict):
+        super(Bot, self).__init__(config['username'], config['password'], False)
+        self.config = config
 
-    # Fetch first N blocks and keep them in memory (or in a file? to avoid bloating RAM)
-    # When requesting pooleffort, only the last (blocknum - N) blocks will be requested, saving data
-    # and speeding up requests and calculations
-    # An incremental recalculation could also be implemented, but it may end up losing precision
-    # over time. Currently, the error is ~10^(-13)
-    # Note: A // 100 * 100 rounds up blocks to the last hundred
-    # Eg: 1952 // 100 * 100 == 19 * 100 == 1900 (because floor division "//" returns an int rounded down
-    try:
-        poolstats = session.get(apiUrl + "pool/stats/").json()
-        totalblocks = poolstats['pool_statistics']['totalBlocksFound']
-        #    totalblocks = int(totalblocks)
-        NblocksNum = totalblocks // 100 * 100  # Integer floor division
-        Nblocklist = session.get(apiUrl + "pool/blocks/pplns?limit=" + str(totalblocks)).json()
-        Ntotalshares = 0
-        Nvalids = 0
-        Nlucks = []
-        for i in reversed(range(totalblocks)):
-            if i == (totalblocks - NblocksNum - 1):
-                break  # Ignore the last (totalblocks % NblocksNum) blocks (note the off-by-one offset)
-            Ntotalshares += int(Nblocklist[i]['shares'])
-            if Nblocklist[i]['valid']:
-                Ndiff = int(Nblocklist[i]['diff'])
-                Nlucks.append(Ntotalshares / Ndiff)
-                Nvalids += 1
-                Ntotalshares = 0
-        NblocksAvg = sum(Nlucks) / Nvalids
-        print("Effort for the first " + str(NblocksNum) + " blocks has been cached")
-    except:
-        print("Failed fetching the last N blocks - defaulting to 0")
-        NblocksNum = 0
-        NblocksAvg = 0
-        Nvalids = 0
+        self._lastFoundBlockNum = 0
+        self._lastFoundBlockLuck = 0
+        self._lastFoundBlockValue = 0
+        self._lastFoundBlockTime = 0
+        self.NblocksNum = 0
+        self.NblocksAvg = 0
+        self.Nvalids = 0
 
-    def __init__(self, name, password, pm):
-        super(bot, self).__init__(name, password, pm)
+        # Fetch first N blocks and keep them in memory (or in a file? to avoid bloating RAM)
+        # When requesting pooleffort, only the last (blocknum - N) blocks will be requested, saving data
+        # and speeding up requests and calculations
+        # An incremental recalculation could also be implemented, but it may end up losing precision
+        # over time. Currently, the error is ~10^(-13)
+        # Note: A // 100 * 100 rounds up blocks to the last hundred
+        # Eg: 1952 // 100 * 100 == 19 * 100 == 1900 (because floor division "//" returns an int rounded down
+        try:
+            self.poolstats = session.get(apiUrl + "pool/stats/").json()
+            self.totalblocks = self.poolstats['pool_statistics']['totalBlocksFound']
+            #    totalblocks = int(totalblocks)
+            self.NblocksNum = self.totalblocks // 100 * 100  # Integer floor division
+            self.Nblocklist = session.get(apiUrl + "pool/blocks/pplns?limit=" + str(self.totalblocks)).json()
+            self.Ntotalshares = 0
+            self.Nvalids = 0
+            self.Nlucks = []
+            for i in reversed(range(self.totalblocks)):
+                if i == (self.totalblocks - self.NblocksNum - 1):
+                    break  # Ignore the last (totalblocks % NblocksNum) blocks (note the off-by-one offset)
+                self.Ntotalshares += int(self.Nblocklist[i]['shares'])
+                if self.Nblocklist[i]['valid']:
+                    self.Ndiff = int(self.Nblocklist[i]['diff'])
+                    self.Nlucks.append(self.Ntotalshares / self.Ndiff)
+                    self.Nvalids += 1
+                    Ntotalshares = 0
+            NblocksAvg = sum(Nlucks) / self.Nvalids
+            print("Effort for the first " + str(self.NblocksNum) + " blocks has been cached")
+        except:
+            print("Failed fetching the last N blocks - defaulting to 0")
+            self.NblocksNum = 0
+            self.NblocksAvg = 0
+            self.Nvalids = 0
         self._lastTick = time.time()
-        self.config = bot.config
         if not self.config['poll_rate']:
             self.config['poll_rate'] = 20
 
     def _tick(self):
-        super(bot, self)._tick()
+        super(Bot, self)._tick()
         if time.time() - self._lastTick > self.config['poll_rate']:
             self.checkForNewBlock()
             self._lastTick = time.time()
@@ -454,8 +453,9 @@ class bot(ch.RoomManager):
                 print("Error while attempting /" + str(cmd.lower()))
                 room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
 
-
-try:
-    bot.easy_start(bot.config['rooms'], bot.config['username'], bot.config['password'])
-except KeyboardInterrupt:
+if __name__ == "__main__":
+    try:
+        config = JsonConfig.load("config.json")
+        b = Bot(config)
+    except KeyboardInterrupt:
     print("\nStopped")
