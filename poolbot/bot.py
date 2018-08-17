@@ -8,7 +8,7 @@ import time
 import re
 import traceback
 
-from util import JsonConfig
+from poolbot.util import JsonConfig
 
 apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
