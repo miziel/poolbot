@@ -90,7 +90,7 @@ class Bot(ch.RoomManager):
         if not config['password'] or config['password'] == '':
             config['password'] = str(input("Pasword: "))
 
-        super(Bot, self).__init__(config['username'], config['password'], True)
+        super(Bot, self).__init__(config['username'], config['password'], False)
         for room in self.config['rooms']:
             self.joinRoom(room)
 
