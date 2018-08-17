@@ -1,10 +1,12 @@
 import json
 import requests
+from typing import List
+from collections import namedtuple
 
 
 class JsonConfig(object):
     @classmethod
-    def load(self, filename) -> dict:
+    def load(cls, filename) -> dict:
         try:
             with open(filename, 'r') as file:
                 return json.load(file)
@@ -13,7 +15,7 @@ class JsonConfig(object):
             raise
 
     @classmethod
-    def load_from_url(self, url) -> dict:
+    def load_from_url(cls, url) -> dict:
         try:
             return requests.get(url).json()
         except Exception as ex:
