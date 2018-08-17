@@ -19,3 +19,4 @@ class JsonConfig(object):
         except Exception as ex:
             print("Unable to load config from URL {0}".format(url))
             raise
+

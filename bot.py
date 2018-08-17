@@ -7,7 +7,7 @@ import random
 import time
 import re
 
-from jsonconfig import JsonConfig
+from util import JsonConfig
 
 apiUrl = "https://supportxmr.com/api/"
 session = requests.Session()
