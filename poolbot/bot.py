@@ -464,4 +464,5 @@ class Bot(ch.RoomManager):
                 room.message("JSON Bourne is trying to kill me!")
             except Exception as ex:
                 print("Error while attempting /" + str(cmd.lower()))
+                self.setFontFace("0")
                 room.message("Oops. Something went wrong. You cannot afford your own Bot. Try again in a few minutes.")
