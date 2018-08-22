@@ -2,5 +2,7 @@
   "rooms": [""],
   "username": "",
   "password": "",
+  "announce_blocks": true,
+  "auto_reconnect": true,
   "poll_rate": 10
 }

@@ -97,12 +97,19 @@ class Bot(ch.RoomManager):
     def _tick(self):
         super(Bot, self)._tick()
         if time.time() - self._lastTick > self.config['poll_rate']:
-            self.checkForNewBlock()
+            if self.config['announce_blocks']:
+                self.checkForNewBlock()
             self._lastTick = time.time()
 
     def message(self, message):
         for room in self.rooms:
             room.message(message)
+
+    def onDisconnect(self, room):
+        if self.config['auto_reconnect']:
+            room.reconnect()
+            room.message("Looks like I got disconnected, but I'm back now.")
+
 
     def getLastFoundBlockNum(self):
         self._lastFoundBlockNum = 0
