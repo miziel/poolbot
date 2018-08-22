@@ -7,6 +7,7 @@ import random
 import time
 import re
 import traceback
+from collections import deque
 
 from poolbot.util import JsonConfig
 
@@ -37,6 +38,7 @@ def prettyTimeDelta(seconds):
 class Bot(ch.RoomManager):
     def __init__(self, config: dict):
         self.config = config
+        self.reconnect_queue = deque(maxlen=len(self.config['rooms']))
 
         self._lastFoundBlockNum = 0
         self._lastFoundBlockLuck = 0
@@ -99,17 +101,20 @@ class Bot(ch.RoomManager):
         if time.time() - self._lastTick > self.config['poll_rate']:
             if self.config['announce_blocks']:
                 self.checkForNewBlock()
+
+            if self.reconnect_queue and self.config['auto_reconnect']:
+                room_name = self.reconnect_queue.pop()
+                if room_name is not None and self.getRoom(room_name) is None:
+                    print("Reconnecting to {0}...".format(room_name))
+                    self.joinRoom(room_name)
+                else:
+                    self.reconnect_queue.append(room_name)
+
             self._lastTick = time.time()
 
     def message(self, message):
         for room in self.rooms:
             room.message(message)
-
-    def onDisconnect(self, room):
-        if self.config['auto_reconnect']:
-            room.reconnect()
-            room.message("Looks like I got disconnected, but I'm back now.")
-
 
     def getLastFoundBlockNum(self):
         self._lastFoundBlockNum = 0
@@ -149,16 +154,15 @@ class Bot(ch.RoomManager):
         self.getLastFoundBlockNum()
 
     def onConnect(self, room):
+        room.message("Warning: self-destruction cancelled. Systems online")
         print("Connected to room {0}.".format(room.name))
 
     def onReconnect(self, room):
         print("Reconnected")
 
     def onDisconnect(self, room):
-        print("Disconnected")
-        for room in self.rooms:
-            room.reconnect()
-        room.message("Warning: self-destruction cancelled. Systems online")
+        print("Disconnected from {0}".format(room.name))
+        self.reconnect_queue.append(room.name)
 
     def checkForNewBlock(self):
         prevBlockHeight = int(self._lastFoundBlockHeight)
@@ -188,7 +192,8 @@ class Bot(ch.RoomManager):
 
         try:
             cmds = ['/help', '/effort', '/pooleffort', '/price', '/block',
-                    '/window', '/test', '/all']  # Update if new command
+                    '/window', '/test', '/all', '/binance', '/die']  # Debug commands
+
             hlps = ['?pplns', '?register', '?help', '?bench', '?daily']  # Update if new helper
             searchObj = re.findall(r'(\/\w+)(\.\d+)?|(\?\w+)', message.body, re.I)
 
@@ -245,6 +250,17 @@ class Bot(ch.RoomManager):
             arg = arg[1:]
 
             try:
+                #if cmd.lower() == "die":
+                #   room.disconnect()
+
+                if cmd.lower() == "binance":
+                    try:
+                        binance = session.get("https://www.binance.com/api/v3/ticker/price?symbol=XMRBTC").json()
+                        BTC_XMR_binance = binance['price']
+                    except (KeyError, ValueError):
+                        BTC_XMR_binance = ' n/a '
+                    room.message("Binance:  {0} BTC / XMR".format(BTC_XMR_binance))
+
                 if cmd.lower() == "all":
                     room.message(" &#x266b;&#x266c;&#x266a; All you need is love! *h* Love is all you need! :D")
 
@@ -410,11 +426,6 @@ class Bot(ch.RoomManager):
                         BTC_XMR_bitfin = bitfinex['last_price']
                     except (KeyError, ValueError):
                         BTC_XMR_bitfin = ' n/a '
-                    try:
-                        binance = session.get("https://www.binance.com/api/v3/ticker/price?symbol=XMRBTC").json()
-                        BTC_XMR_binance = binance['price']
-                    except (KeyError, ValueError):
-                        BTC_XMR_binance = ' n/a '
                     room.message(("\n|| {10:<13} | {11:<5} {12:^5.5} | {13:<4} {14:<7.7} | {15:<4} {16:<^5.5} ||"
                                   "\n|| {0:<13} | {1:<5} {2:^5.5} | {3:<4} {4:^7.7} ||"
                                   "\n|| {5:<13} | {6:<5} {7:^5.5} | {8:<4} {9:<7.7} ||"
