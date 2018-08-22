@@ -403,6 +403,11 @@ class Bot(ch.RoomManager):
                         BTC_XMR_bitfin = bitfinex['last_price']
                     except (KeyError, ValueError):
                         BTC_XMR_bitfin = ' n/a '
+                    try:
+                        binance = session.get("https://www.binance.com/api/v3/ticker/price?symbol=XMRBTC").json()
+                        BTC_XMR_binance = binance['price']
+                    except (KeyError, ValueError):
+                        BTC_XMR_binance = ' n/a '
                     room.message(("\n|| {10:<13} | {11:<5} {12:^5.5} | {13:<4} {14:<7.7} | {15:<4} {16:<^5.5} ||"
                                   "\n|| {0:<13} | {1:<5} {2:^5.5} | {3:<4} {4:^7.7} ||"
                                   "\n|| {5:<13} | {6:<5} {7:^5.5} | {8:<4} {9:<7.7} ||"
